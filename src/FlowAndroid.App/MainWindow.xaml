@@ -152,7 +152,7 @@
                         <TextBlock x:Name="LogsDescription" Text="日志仅保留在当前应用会话，分享前请遮盖设备序列号和文件路径。"
                                    TextWrapping="Wrap" Opacity="0.72"/>
                         <TextBox x:Name="LogsText" TextWrapping="Wrap" IsReadOnly="True"
-                                 AcceptsReturn="True" Height="430" VerticalScrollBarVisibility="Auto"/>
+                                 AcceptsReturn="True" Height="430"/>
                         <Button x:Name="ClearLogsButton" Content="清空日志" HorizontalAlignment="Left" Click="ClearLogsButton_Click"/>
                     </StackPanel>
                 </ScrollViewer>
