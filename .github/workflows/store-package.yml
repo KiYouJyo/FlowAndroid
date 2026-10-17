@@ -21,6 +21,9 @@ jobs:
           if (!$env:STORE_PACKAGE_ID -or !$env:STORE_PUBLISHER) { throw 'Configure FLOWANDROID_STORE_PACKAGE_ID and FLOWANDROID_STORE_PUBLISHER from Partner Center before building Store packages.' }
           ./scripts/Prepare-MsixIdentity.ps1 -PackageIdentity $env:STORE_PACKAGE_ID -PublisherSubject $env:STORE_PUBLISHER
           ./scripts/Check-MsixPackage.ps1
+      - name: Stamp monotonic Store MSIX version
+        shell: pwsh
+        run: ./scripts/Set-MsixVersion.ps1 -BuildNumber ${{ github.run_number }}
       - name: Build unsigned Store package
         shell: pwsh
         run: |

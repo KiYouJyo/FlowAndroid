@@ -29,3 +29,7 @@ A production MSIX needs app identity and a **repository-specific** trusted signi
 ## FlowAndroid-specific MSIX pipeline
 
 The single-project MSIX CI workflow is [msix-package.yml](../.github/workflows/msix-package.yml). A normal push builds an **unsigned test-only MSIX** with SHA256SUMS and three-language notes. For signature setup, read [CERTIFICATE_SETUP.md](CERTIFICATE_SETUP.md); a signed candidate requires the specific PFX secrets and package identity. A signed GitHub candidate cannot be published without manually asserting hardware acceptance. Microsoft Store submission has its own Partner Center identity and review and is not automated without access.
+
+### Versioning
+
+Both GitHub MSIX candidates and Store upload candidates replace the fourth field of the package version with their workflow run number (starting from 0.1.0.0), to avoid same-version update collisions. The version-stamping helper validates the MSIX 16-bit field limit. The GitHub and Store channels must retain intentionally distinct package identities and version sequences when configured.

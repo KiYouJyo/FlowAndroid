@@ -49,6 +49,9 @@ jobs:
           $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($path,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
           if (!$cert.HasPrivateKey -or $cert.NotAfter -le [DateTime]::UtcNow -or $cert.NotBefore -gt [DateTime]::UtcNow) { throw 'Invalid or expired signing certificate.' }
           ./scripts/Prepare-MsixIdentity.ps1 -PackageIdentity $env:PACKAGE_ID -PublisherSubject $cert.Subject
+      - name: Stamp monotonic MSIX package version
+        shell: pwsh
+        run: ./scripts/Set-MsixVersion.ps1 -BuildNumber ${{ github.run_number }}
       - name: Build unsigned package
         shell: pwsh
         run: |
