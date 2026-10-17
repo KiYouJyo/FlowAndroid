@@ -14,9 +14,11 @@
 - [x] Serial-bound Recovery sideload engine, explicit user consent, timeout and failure reporting.
 - [x] OTA build-timestamp downgrade prevention.
 - [x] Operator instructions and transfer-versus-install-result distinction.
-- [ ] Verify current Google HTML catalog parsing against actual live response in Windows.
+- [x] Live Google OTA/Factory catalog integration smoke test in GitHub Actions (official CN mirror).
+- [ ] Confirm parser behavior on the user’s Windows machine/network.
 - [ ] Test physical Pixel Recovery state changes / signature failures / disconnected USB.
-- [ ] Post-reboot automated Android version verification and user feedback.
+- [x] Post-reboot build fingerprint comparison against the expected OTA build (code/tests).
+- [ ] Physical Pixel post-reboot verification with real firmware.
 - [ ] Additional variant/carrier policy where the OTA origin requires it.
 
 ## Factory v0.3
@@ -27,7 +29,9 @@
 - [ ] Multi-model hardware acceptance and rescue playbooks.
 
 ## Distribution & expansions
-- [ ] Dedicated product publisher identity and repository signing certificate.
-- [ ] Signed MSIX and public cert with SHA256SUMS and trilingual notes.
+- [x] Parameterized unsigned MSIX and gated signed candidate workflow (unsigned build green).
+- [ ] Configure dedicated product publisher identity and signing certificate in GitHub.
+- [x] SignTool/public-cert-export/SHA256SUMS/trilingual-release workflow prepared.
+- [ ] Real signed MSIX verification once certificate is configured.
 - [ ] Microsoft Store onboarding, identity, policy review and real store submission.
 - [ ] Community ROM adapters; require independent device policies and test coverage.

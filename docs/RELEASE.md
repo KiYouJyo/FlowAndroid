@@ -25,3 +25,7 @@ Optional `publish_prerelease=true` publishes a clearly marked **unsigned, experi
 ## Signed MSIX and Microsoft Store blockers
 
 A production MSIX needs app identity and a **repository-specific** trusted signing certificate (plus signing secrets and policies). Microsoft Store publication separately needs a Partner Center product identity and submission/approval. Neither was supplied. Do not copy certificates or store identities from unrelated apps, and do not claim Store release or real Pixel acceptance until verified.
+
+## FlowAndroid-specific MSIX pipeline
+
+The single-project MSIX CI workflow is [msix-package.yml](../.github/workflows/msix-package.yml). A normal push builds an **unsigned test-only MSIX** with SHA256SUMS and three-language notes. For signature setup, read [CERTIFICATE_SETUP.md](CERTIFICATE_SETUP.md); a signed candidate requires the specific PFX secrets and package identity. A signed GitHub candidate cannot be published without manually asserting hardware acceptance. Microsoft Store submission has its own Partner Center identity and review and is not automated without access.

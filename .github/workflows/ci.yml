@@ -30,6 +30,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Enforce write safety contract
+        shell: pwsh
+        run: ./scripts/Test-SafetyContract.ps1
       - name: Check localization key parity
         shell: pwsh
         run: ./scripts/Test-Localization.ps1
