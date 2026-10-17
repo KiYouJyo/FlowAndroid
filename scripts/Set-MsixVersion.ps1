@@ -12,7 +12,11 @@ $ns.AddNamespace('p','http://schemas.microsoft.com/appx/manifest/foundation/wind
 $ident = $doc.SelectSingleNode('/p:Package/p:Identity',$ns)
 if (!$ident) { throw 'MSIX Identity missing' }
 $version = $ident.GetAttribute('Version')
-if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)\.(\d+)$') { throw 'Invalid 4-part version' }
-$ident.SetAttribute('Version', "$($Matches[1]).$($Matches[2]).$($Matches[3]).$BuildNumber")
+$match = [regex]::Match($version, '^(\d+)\.(\d+)\.(\d+)\.(\d+)
+$doc.Save((Join-Path (Get-Location) $Manifest))
+Write-Host "Build revision set to $BuildNumber."
+)
+if (!$match.Success) { throw 'Invalid 4-part version' }
+$ident.SetAttribute('Version', "$($match.Groups[1].Value).$($match.Groups[2].Value).$($match.Groups[3].Value).$BuildNumber")
 $doc.Save((Join-Path (Get-Location) $Manifest))
 Write-Host "Build revision set to $BuildNumber."
