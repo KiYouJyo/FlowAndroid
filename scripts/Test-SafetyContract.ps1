@@ -14,7 +14,7 @@ if ($core -notmatch 'GoogleFirmwareVerifier\.VerifyAsync' -or $core -notmatch 'B
 if ($core -notmatch 'devices\.Count != 1' -or $core -notmatch '\["-s", serial, "sideload", ota\.Path\]') {
  throw 'Single-device serial-bound sideload rule missing.'
 }
-if ($release -notmatch 'inputs\.hardware_accepted == true &&' -or $release -notmatch 'inputs\.sign_package == true &&') {
+if ($release -notmatch 'inputs\.hardware_accepted == true' -or $release -notmatch 'inputs\.sign_package == true &&') {
  throw 'Release approval condition missing.'
 }
 Write-Host 'Write safety checks passed.'
