@@ -56,7 +56,7 @@ jobs:
           $msargs = @('src/FlowAndroid.App/FlowAndroid.App.csproj','/restore','/t:Build','/p:Configuration=Release','/p:Platform=x64','/p:RuntimeIdentifier=win-x64','/p:WindowsPackageType=MSIX','/p:EnableMsixTooling=true','/p:GenerateAppxPackageOnBuild=true','/p:AppxPackageSigningEnabled=false','/p:UapAppxPackageBuildMode=SideloadOnly','/p:AppxBundle=Never',"/p:AppxPackageDir=$env:GITHUB_WORKSPACE\AppPackages\")
           & msbuild @msargs
           if ($LASTEXITCODE -ne 0) { throw 'MSIX compilation failed.' }
-          $files = @(Get-ChildItem AppPackages -Recurse -File -Filter '*.msix')
+          $files = @(Get-ChildItem AppPackages -Recurse -File -Filter 'FlowAndroid.App*.msix' | Where-Object { $_.FullName -notmatch '\\Dependencies\\' })
           if ($files.Count -ne 1) { throw "Expected one MSIX, found $($files.Count)" }
           New-Item -ItemType Directory dist -Force | Out-Null
           Copy-Item $files[0].FullName 'dist/FlowAndroid-0.1.0-x64.msix'
