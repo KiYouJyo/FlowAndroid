@@ -1,6 +1,8 @@
 name: Unsigned diagnostic prerelease
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       publish_prerelease:
