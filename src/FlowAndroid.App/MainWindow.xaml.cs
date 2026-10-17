@@ -355,6 +355,12 @@ public sealed partial class MainWindow : Window
                 "SHA-256: " + inspected.Sha256,
                 verified.Verified ? T("officialVerified") : T("officialFailed") + " " + verified.Explanation,
                 codeMatch ? T("factoryMatch") : T("factoryMismatch"),
+                T("rollbackTitle") + ": " + T(PixelDeviceCatalog.GetRollbackNotice(inspected.Codename) switch
+                {
+                    PixelDeviceCatalog.RollbackNotice.Pixel6Or8May2025 => "rollback2025",
+                    PixelDeviceCatalog.RollbackNotice.Pixel10May2026 => "rollback2026",
+                    _ => "rollbackUnknown"
+                }),
                 T("factoryWriteDisabled"));
             AddLog("Factory inspection: official=" + verified.Verified + ", device match=" + codeMatch);
         }

@@ -75,9 +75,13 @@ public sealed class AndroidDeviceService
                 {
                     var product = await TryRunAsync(_fastboot, ["-s", device.Serial, "getvar", "product"], token)
                         .ConfigureAwait(false);
+                    var productCode = DeviceOutputParser.ParseFastbootProduct(product?.CombinedOutput ?? "");
+                    var knownName = PixelDeviceCatalog.GetModel(productCode);
                     devices.Add(device with
                     {
-                        Codename = DeviceOutputParser.ParseFastbootProduct(product?.CombinedOutput ?? "")
+                        Codename = productCode,
+                        Model = knownName ?? "",
+                        Manufacturer = knownName is null ? "" : "Google"
                     });
                 }
             }
