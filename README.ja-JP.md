@@ -10,15 +10,18 @@
 
 ## 開発状況
 
-**v0.1.0 は未公開の診断プレビューです。** 読み取り専用の検査のみ可能です。ファームウェア書き込み、ブートローダーのロック変更、初期化、任意コマンドの実行はできません。
+**v0.1.0 は未公開の開発プレビューです。** デバイス診断、Google 公式 SHA-256 の照合、確認付き OTA Sideload の試作を実装しました。OTA 転送はシステムを変更しますが、Pixel 実機検証は未完了のため通常使用を推奨しません。Factory パーティション書き込み、ロック変更、初期化は無効です。
 
 - WinUI 3 / Mica によるネイティブ UI。中国語・日本語・英語を再起動せずに切り替え。
 - 公式 Android SDK Platform-Tools で ADB / Fastboot を確認し、Pixel の型番・Android バージョン・コード名を取得。
 - ローカルのフル OTA ZIP のメタデータを検査し、SHA-256 を計算。
 - 複数デバイス、未承認、非 Pixel、OTA コード名不一致を安全側で拒否。
+- Google 公式ページの SHA-256 と OTA / Factory ZIP を照合します。
+- バックアップ・規約・Recovery の明示確認後、ビルド日時や元のデバイス識別子を再確認して OTA を転送する試作です。
+- Factory ZIP を読み取り専用で検査し、スクリプト実行とパーティション書き込みを禁止します。
 - セッション内の診断ログ。テレメトリとデバイス情報アップロードはありません。
 
-**注意：** ローカルで計算した SHA-256 は Google による署名や配布元の真正性を証明するものではありません。
+**注意：** ローカル SHA-256 だけでは真正性を証明できません。Google が公表したチェックサムと照合し、Recovery 側での署名検証も必要です。ADB 転送完了はインストール成功を保証しません。[OTA 手順](docs/OTA_WORKFLOW.md)を参照してください。
 
 ## ビルド方法
 
@@ -36,4 +39,4 @@ dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x
 
 `src/FlowAndroid.App` は UI、`src/FlowAndroid.Core` は検出と安全検査、`tests` は単体テストです。[アーキテクチャ](docs/ARCHITECTURE.md)、[ロードマップ](docs/ROADMAP.md)、[安全ポリシー](docs/FLASH_SAFETY.md)、[リリース手順](docs/RELEASE.md) を参照してください。
 
-v0.2 では配布元の検証と安全な公式 OTA Sideload、以降では Factory Image と署名済み MSIX を計画しています。プライバシーについては [PRIVACY](PRIVACY.md)、[SECURITY](SECURITY.md)、[CONTRIBUTING](CONTRIBUTING.md) を参照。[MIT ライセンス](LICENSE)。© 2026 KiYouJyo。
+v0.2 相当の OTA 検証・転送コードはありますが実機試験が未完了です。Factory Image は検査のみ可能で、実際のパーティション書き込みは禁止しています。未署名の開発用 GitHub プレリリースは手動実行できます。署名済み MSIX と Store 公開には証明書・製品 ID と追加検証が必要です。プライバシーについては [PRIVACY](PRIVACY.md)、[SECURITY](SECURITY.md)、[CONTRIBUTING](CONTRIBUTING.md) を参照。[MIT ライセンス](LICENSE)。© 2026 KiYouJyo。

@@ -1,12 +1,13 @@
 # Security policy
 
-FlowAndroid controls potentially destructive device maintenance workflows. Do not submit real device serials, private firmware, credentials or signing keys in public issues.
+FlowAndroid can modify an Android device. Do not upload real serial numbers, credentials, private firmware or signing material to public GitHub issues. Report vulnerabilities privately through repository security advisories (if enabled).
 
-Report vulnerabilities privately via GitHub's security advisory reporting (if enabled), or contact the repository owner privately.
+## Operational boundaries
 
-## Current boundaries
-
-- No raw shell, adb shell, arbitrary fastboot flash, wipe, sideload, unlock, or relock controls.
-- Firmware metadata and its locally computed SHA-256 do **not** establish trusted origin or signature authenticity.
-- Unrecognized devices, multiple devices, unavailable tools, and mismatched firmware fail closed.
-- Never retry a failed firmware operation blindly, unplug during active writes, or relock a device with unofficial images.
+- The supervised OTA prototype runs only a single serial-bound `adb sideload` after Google checksum matching, device identity checks and multiple on-screen confirmations.
+- OTA transfer changes device software; **no physical Pixel acceptance has been performed**. Do not use this development preview on important devices.
+- Google checksum validation is independent of, and does not bypass, package signature checks performed by Android Recovery.
+- Unknown hardware/build timestamps, multiple devices, untrusted firmware sources, checksum failures, unsupported transports and downgrade attempts fail closed.
+- No generic command shell, unsigned ROM flashing, factory script execution, fastboot partition writes, wiping, bootloader locking/unlocking or silent reboot is exposed.
+- ADB transfer completion does not establish installation success. Check Recovery on the phone; do not retry blindly.
+- Local log information may contain device characteristics. Review and redact before sharing.

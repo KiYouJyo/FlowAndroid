@@ -1,26 +1,31 @@
 # Architecture
 
 ```text
-src/FlowAndroid.App   WinUI 3 shell, pages, live UI localization
-         |
-src/FlowAndroid.Core  Process boundary, parsing, firmware inspection, safety checks
-         |
-       Official Android SDK Platform-Tools (adb / fastboot)
-         |
-       USB-connected Pixel (read-only diagnostics)
+WinUI 3 + Mica (zh-CN / ja-JP / en-US, live)
+    |
+    +-- Pixel device diagnostics --> AndroidDeviceService --> ADB/Fastboot (read-only)
+    |
+    +-- Official Google metadata --> GoogleFirmwareCatalog (fixed HTTPS hosts)
+    |                                  --> GoogleFirmwareVerifier (SHA-256)
+    |
+    +-- OTA package --> OtaPackageInspector (metadata / post-timestamp)
+    |                        --> PixelOtaPreflight
+    |                        --> PixelOtaTransfer (single serial-bound ADB sideload)
+    |
+    +-- Factory image --> FactoryImageInspector (read only; writes disabled)
 ```
 
-## Design constraints
+## Trust boundaries
 
-1. Process execution uses `ProcessStartInfo.ArgumentList` and never invokes a system shell or interpolated command string.
-2. Read-only tool operations are explicitly allowlisted. A generic execute-command textbox is intentionally absent.
-3. The UI never interprets a compatible OTA filename as evidence of trust. It reads Android OTA metadata and computes SHA-256; signature trust remains a future milestone.
-4. Device serial and hardware codename are separate identifiers. Unknown or ambiguous targets must be rejected, not guessed.
-5. Multiple connected devices fail closed until a serial-binding UX is implemented.
-6. Package parsing is bounded and does not extract archive entries to disk.
-7. GUI supports light/dark/high-contrast through WinUI resources; strings change without application restart.
-8. `src/FlowAndroid.Core` is testable independently of Windows and USB hardware.
+- Invoke executables with `ProcessStartInfo.ArgumentList`; no shell interpolation or arbitrary command textbox.
+- The untrusted ZIP is never executed. Factory archive scripts are not run or extracted.
+- Published SHA-256 is fetched only from fixed HTTPS Google Developers catalog URLs; ZIP fingerprints alone are not proof of publisher authenticity.
+- Device identity is captured during a single authorized ADB session; sideload requires the same serial in Recovery and a single connected device.
+- OTA requires explicit acceptance of backup responsibility, Google terms, Recovery mode and a second modal confirmation.
+- Compare target `post-timestamp` with current device `ro.build.date.utc`; missing or lower timestamps prohibit OTA.
+- No automatic Recovery reboot, factory flashing, bootloader locking, wipe, silent downgrade, or arbitrary fastboot commands.
+- Core logic has mock-runner unit tests and is independently testable without hardware.
 
-## Why no write operations in the first build?
+## Unresolved
 
-Pixel variants have anti-rollback and partition-layout constraints. Treating a SHA-256 calculated from an arbitrary downloaded ZIP as a manufacturer's signature would be a security error. The initial preview intentionally stops at a validated plan, before executing sideload or fastboot flash.
+Google's live webpage structure may evolve, and parsing fails closed on changes. OTA acceptance tests on physical devices and interrupted-transfer recovery are outstanding. Model/SKU-specific anti-rollback verification beyond build timestamp is required for factory operations.

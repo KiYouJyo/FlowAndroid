@@ -10,15 +10,18 @@
 
 ## Status
 
-**v0.1.0 is an unreleased diagnostic preview.** It performs read-only checks only. No flashing, bootloader locking/unlocking, wiping, or arbitrary commands are available.
+**v0.1.0 is an unreleased developer preview.** Read-only diagnostics, Google checksum verification and a supervised OTA sideload prototype are implemented. OTA transfer DOES change system software; this path has NOT passed real Pixel acceptance and must not be treated as production-ready. Factory partition flashing, lock/unlock and wiping remain disabled.
 
 - Native WinUI 3 / Mica Windows UI with live Chinese / Japanese / English switching.
 - ADB / Fastboot detection using official Android SDK Platform-Tools; Pixel model, version, and codename inspection.
 - Local full OTA ZIP metadata inspection and SHA-256 fingerprinting.
 - Fail-closed handling of multiple / unauthorized / unsupported devices and incompatible OTA codenames.
+- Official Google Developers HTTPS checksum matching for local OTA and factory ZIP files.
+- Supervised, explicit-consent OTA transfer with revalidated fingerprint, build timestamp and original device serial; Recovery-side installation success must be checked manually.
+- Factory images are inspected without executing scripts or writing partitions.
 - Session-local diagnostic logs. No telemetry or device-data uploads.
 
-SHA-256 computed from a user-supplied file does **not** verify the firmware publisher's signature or authenticity.
+A hash computed locally is **not** a publisher signature. The OTA prototype compares it to an official published Google digest, and device Recovery still validates package signatures. See [OTA instructions](docs/OTA_WORKFLOW.md).
 
 ## Development
 
@@ -36,6 +39,6 @@ Run the generated executable with the matching Windows App SDK Runtime installed
 
 `src/FlowAndroid.App` provides UI, `src/FlowAndroid.Core` provides detection / inspection / safety logic, and `tests` provides pure unit tests. See [architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [safety policy](docs/FLASH_SAFETY.md), and [release notes](docs/RELEASE.md).
 
-The future v0.2 milestone covers trusted firmware provenance and a reviewed guided official OTA sideload state machine; factory images and signed MSIX shipping are later milestones.
+The v0.2 checksum-verified OTA workflow is implemented but needs real-device acceptance and failure-mode testing. Factory ZIP inspection exists, while destructive fastboot operations remain blocked. An opt-in unsigned GitHub diagnostic prerelease workflow is available; signed MSIX and Store shipping require certificate and identity provisioning.
 
 Local-first privacy. Redact serials and paths before sharing logs. Read [PRIVACY](PRIVACY.md), [SECURITY](SECURITY.md), [CONTRIBUTING](CONTRIBUTING.md). [MIT](LICENSE). © 2026 KiYouJyo.

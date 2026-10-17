@@ -11,15 +11,17 @@
 
 ## 当前进度
 
-**0.1.0 诊断预览阶段，尚未正式发布可安装版本。** 此版本仅进行只读检测，绝不自动执行刷机、解锁、上锁或清除用户数据。
+**0.1.0 开发预览阶段，尚未正式发布签名安装包。** 已实现只读设备检测、官方固件校验、人工确认式 OTA Sideload 原型；OTA 是实际系统更新操作，尚未完成 Pixel 真机验收，请勿将 CI 产物用于重要设备。Factory Image 分区刷写、解锁、上锁及擦除仍被禁用。
 
 - WinUI 3 + Mica 原生 Windows 图形界面，简体中文、日本語、English 可即时切换。
 - 使用官方 Android SDK Platform-Tools 检测 ADB / Fastboot 设备、Pixel 机型、Android 版本及硬件代号。
 - 本地导入完整 OTA ZIP，检查 `META-INF/com/android/metadata`，计算 SHA-256 文件指纹。
 - 默认拒绝多设备、未授权/无法识别设备、非 Pixel 设备、OTA 代号不匹配的情况。
+- 可从 Google 官方页面在线核对 OTA / Factory ZIP 的 SHA-256；OTA 传输前二次校验固件、构建时间和设备身份，要求备份、许可与 Recovery 操作确认。
+- 可对 Factory Image 做只读检查；任何 fastboot 分区刷写均禁止。
 - 可查看会话诊断日志；没有遥测和上传设备数据的功能。
 
-**注意：** 本地计算 SHA-256 不能证明固件来自 Google，也不代表验证了官方签名。兼容性检查通过不意味着允许刷写。
+**注意：** 单纯计算本地 SHA-256 不具备可信性；只有与 Google HTTPS 页面公布值匹配的文件才有资格进入受控 OTA 流程。Recovery 侧仍需验证软件包签名。ADB 传输成功也不等于安装成功，应以手机 Recovery 屏幕为准。详细参阅 [OTA 操作说明](docs/OTA_WORKFLOW.md) 与 [安全约束](docs/FLASH_SAFETY.md)。
 
 ## 获取与构建
 
@@ -45,7 +47,7 @@ dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x
 
 ## 计划
 
-0.2 版本将研究官方 OTA 来源验证、受控 Sideload 流程与设备状态复核；0.3 再考虑 Factory Image。签名 MSIX、公开证书和 SHA256SUMS 将在发布流程具备签名条件后实现。完整安排见 [ROADMAP](docs/ROADMAP.md)。
+0.2 所需的 OTA 校验与受控传输代码已进入开发预览，但仍需 Pixel 真机、Google 页面格式及异常流程验收。0.3 先完成 Factory Image 只读检查；分区刷写须待反回滚与机型矩阵完备。另提供手动触发的**未签名诊断预发布工作流**，签名 MSIX 与商店发布仍需证书、应用身份和额外验收。完整安排见 [ROADMAP](docs/ROADMAP.md)。
 
 ## 隐私与许可
 
