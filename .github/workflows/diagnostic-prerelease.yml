@@ -1,0 +1,49 @@
+name: Unsigned diagnostic prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_prerelease:
+        description: "Publish an unsigned diagnostic prerelease?"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Test
+        run: dotnet test tests/FlowAndroid.Core.Tests/FlowAndroid.Core.Tests.csproj -c Release
+      - name: Build
+        run: dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x64
+      - name: Package unsigned diagnostic executable and digest
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = 'src/FlowAndroid.App/bin/x64/Release/net10.0-windows10.0.19041.0/win-x64'
+          if (!(Test-Path "$output/FlowAndroid.App.exe")) { throw 'Missing executable' }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "$output/*" -DestinationPath 'dist/FlowAndroid-unsigned-diagnostic-x64.zip' -Force
+          $digest = (Get-FileHash 'dist/FlowAndroid-unsigned-diagnostic-x64.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$digest  FlowAndroid-unsigned-diagnostic-x64.zip" | Set-Content dist/SHA256SUMS.txt -Encoding utf8
+          'UNSIGNED DIAGNOSTIC BUILD. Not a signed installer or production flasher. Real-device acceptance remains outstanding. Needs Google Platform-Tools and Windows App SDK Runtime.' | Set-Content dist/README.txt -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlowAndroid-unsigned-diagnostic
+          path: dist/*
+      - name: Publish explicit prerelease
+        if: inputs.publish_prerelease == true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "diag-v0.1.0-run${{ github.run_number }}"
+          gh release create $tag dist/* --prerelease --title "FlowAndroid UNSIGNED diagnostic $tag" --notes "Unsigned experimental diagnostic. Factory flashing disabled. Real Pixel acceptance required. Consult SECURITY.md." --target ${{ github.sha }}
