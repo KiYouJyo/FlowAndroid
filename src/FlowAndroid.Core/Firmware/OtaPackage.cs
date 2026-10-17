@@ -6,4 +6,5 @@ public sealed record OtaPackage(
     string OtaType,
     string Build,
     string Sha256,
-    long FileSize);
+    long FileSize,
+    long PostTimestamp = 0);

@@ -7,7 +7,8 @@ public sealed record AndroidDevice(
     string Codename = "",
     string Model = "",
     string Manufacturer = "",
-    string AndroidVersion = "")
+    string AndroidVersion = "",
+    long BuildTimestamp = 0)
 {
     public bool IsOnlineAdb => Transport == "adb" && State == "device";
     public bool IsGooglePixel =>

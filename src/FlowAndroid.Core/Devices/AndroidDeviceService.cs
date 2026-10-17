@@ -50,12 +50,15 @@ public sealed class AndroidDeviceService
                     var model = await GetPropAsync(device.Serial, "ro.product.model", token).ConfigureAwait(false);
                     var manufacturer = await GetPropAsync(device.Serial, "ro.product.manufacturer", token).ConfigureAwait(false);
                     var version = await GetPropAsync(device.Serial, "ro.build.version.release", token).ConfigureAwait(false);
+                    var rawBuildDate = await GetPropAsync(device.Serial, "ro.build.date.utc", token).ConfigureAwait(false);
+                    long.TryParse(rawBuildDate, out var buildTimestamp);
                     devices.Add(device with
                     {
                         Codename = codename,
                         Model = model,
                         Manufacturer = manufacturer,
-                        AndroidVersion = version
+                        AndroidVersion = version,
+                        BuildTimestamp = buildTimestamp
                     });
                 }
             }

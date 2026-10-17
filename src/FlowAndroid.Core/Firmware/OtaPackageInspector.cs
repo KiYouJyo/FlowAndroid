@@ -42,6 +42,7 @@ public sealed class OtaPackageInspector
             throw new InvalidDataException("OTA metadata does not declare pre-device.");
         var otaType = values.GetValueOrDefault("ota-type", "unknown");
         var build = values.GetValueOrDefault("post-build", "(not provided)");
+        long.TryParse(values.GetValueOrDefault("post-timestamp", ""), out var postTimestamp);
 
         await using var file = File.OpenRead(path);
         var hash = await SHA256.HashDataAsync(file, token).ConfigureAwait(false);
@@ -51,6 +52,7 @@ public sealed class OtaPackageInspector
             otaType,
             build,
             Convert.ToHexStringLower(hash),
-            file.Length);
+            file.Length,
+            postTimestamp);
     }
 }

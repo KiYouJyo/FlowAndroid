@@ -42,7 +42,7 @@ public class GoogleFirmwareTests
         {
             var entry = zip.CreateEntry("META-INF/com/android/metadata");
             using var writer = new StreamWriter(entry.Open());
-            writer.Write("pre-device=shiba\nota-type=AB");
+            writer.Write("pre-device=shiba\nota-type=AB\npost-timestamp=1800000100");
         }
         try
         {
@@ -50,7 +50,7 @@ public class GoogleFirmwareTests
             var trusted = new OfficialFirmware(GoogleImageType.Ota, filename, ota.Sha256,
                 new Uri("https://dl.google.com/dl/android/aosp/" + filename));
             var snapshot = new DeviceSnapshot(new(true, "ADB"), new(true, "Fastboot"),
-                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16")]);
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
             var runner = new FakeRunner { Line = "wrong sideload" };
             var coordinator = new PixelOtaTransfer(runner);
             var result = await coordinator.RunAsync(snapshot, ota, [trusted], true, true, true);

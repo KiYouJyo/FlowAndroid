@@ -49,6 +49,11 @@ public sealed class PixelOtaTransfer
                 !string.Equals(ota.Sha256, trust.Official.Sha256, StringComparison.OrdinalIgnoreCase))
                 return new(TransferStage.Blocked, "Device codename or ZIP fingerprint changed.");
 
+            if (original.Devices[0].BuildTimestamp <= 0 || ota.PostTimestamp <= 0)
+                return new(TransferStage.Blocked, "Build timestamps unavailable; downgrade safety cannot be determined.");
+            if (ota.PostTimestamp < original.Devices[0].BuildTimestamp)
+                return new(TransferStage.Blocked, "Older build is blocked to prevent unsupported downgrades.");
+
             var serial = original.Devices[0].Serial;
             progress?.Report(TransferStage.WaitingForRecovery);
             var list = await _runner.RunAsync(_adb, ["devices", "-l"], TimeSpan.FromSeconds(15), ct);
