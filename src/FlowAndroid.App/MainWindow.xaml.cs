@@ -34,7 +34,7 @@ public sealed partial class MainWindow : Window
         UpdateDeviceDetails();
         UpdatePackageDetails();
         UpdatePreflight();
-        AddLog("FlowAndroid 0.1.0 started. Read-only diagnostic mode.");
+        AddLog("FlowAndroid 0.1.0 experimental preview. OTA transfer is write-capable after checks; factory flashing disabled.");
     }
 
     private string T(string key) => AppStrings.Get(_language, key);
@@ -203,7 +203,7 @@ public sealed partial class MainWindow : Window
     {
         UpdatePreflight();
         var result = PixelOtaPreflight.Evaluate(_snapshot, _package);
-        AddLog("Compatibility preflight: " + result.Status + " (no write permitted)");
+        AddLog("Compatibility preflight: " + result.Status + " (not authorization to write)");
     }
 
     private void ClearLogsButton_Click(object sender, RoutedEventArgs e)
