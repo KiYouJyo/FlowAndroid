@@ -21,7 +21,7 @@ public static class GoogleFirmwareVerifier
             string.Equals(x.FileName, name, StringComparison.OrdinalIgnoreCase)).ToArray();
         if (matches.Length != 1 || matches[0].Sha256.Length != 64)
             return new(false, "No unique match in the official Google checksum catalog.");
-        if (!Convert.TryFromHexString(matches[0].Sha256, new byte[32], out var written) || written != 32)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(matches[0].Sha256, "^[0-9a-fA-F]{64}$"))
             return new(false, "Invalid official SHA-256.");
         await using var stream = File.OpenRead(path);
         var actual = await SHA256.HashDataAsync(stream, ct);
