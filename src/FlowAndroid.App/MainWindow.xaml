@@ -1,0 +1,174 @@
+<Window
+    x:Class="FlowAndroid.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid RowDefinitions="48,*" Background="Transparent">
+        <Grid x:Name="DragRegion" Grid.Row="0" Background="Transparent"
+              Padding="20,0,150,0">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE8EA;" FontSize="18" />
+                <TextBlock Text="FlowAndroid" FontSize="14" FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="PreviewTag" Text="0.1 · Preview" FontSize="12"
+                           Opacity="0.65" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+        <NavigationView x:Name="Navigation" Grid.Row="1" Background="Transparent"
+                        IsBackButtonVisible="Collapsed" IsSettingsVisible="False"
+                        PaneDisplayMode="Left" AlwaysShowHeader="False"
+                        SelectionChanged="Navigation_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="HomeNav" Tag="home" Content="设备">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Home" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="FirmwareNav" Tag="firmware" Content="OTA 固件">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Download" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="LogsNav" Tag="logs" Content="诊断日志">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Document" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="AboutNav" Tag="about" Content="关于">
+                    <NavigationViewItem.Icon><SymbolIcon Symbol="Help" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <NavigationView.PaneFooter>
+                <StackPanel Spacing="8" Padding="12,4,12,12">
+                    <TextBlock x:Name="LanguageCaption" Text="界面语言" Opacity="0.7" FontSize="12"/>
+                    <ComboBox x:Name="LanguageSelector" HorizontalAlignment="Stretch"
+                              SelectedIndex="0" SelectionChanged="LanguageSelector_SelectionChanged">
+                        <ComboBoxItem Content="简体中文" Tag="zh-CN"/>
+                        <ComboBoxItem Content="日本語" Tag="ja-JP"/>
+                        <ComboBoxItem Content="English" Tag="en-US"/>
+                    </ComboBox>
+                </StackPanel>
+            </NavigationView.PaneFooter>
+            <Grid Padding="30,16,30,30">
+                <ScrollViewer x:Name="HomePanel" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20" MaxWidth="920" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="5">
+                            <TextBlock x:Name="HomeTitle" Text="我的设备"
+                                       FontSize="30" FontWeight="SemiBold" />
+                            <TextBlock x:Name="HomeDescription" Text="通过 USB 连接 Google Pixel，检查 ADB 与 Fastboot。"
+                                       TextWrapping="Wrap" Opacity="0.75"/>
+                        </StackPanel>
+                        <InfoBar x:Name="SafetyBanner" IsOpen="True" IsClosable="False"
+                                 Severity="Informational" Title="安全预览"
+                                 Message="本版本只检测设备和 OTA 兼容性，不会执行刷写、解锁或清除数据。" />
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="18">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <FontIcon Glyph="&#xE8EA;" FontSize="32" VerticalAlignment="Center"/>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock x:Name="DeviceHeading" Text="设备状态" FontSize="20" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="DeviceSummary" Text="尚未扫描" TextWrapping="Wrap" Opacity="0.75"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock x:Name="ModelCaption" Text="机型" Opacity="0.65"/>
+                                        <TextBlock x:Name="ModelValue" Text="—" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="CodeCaption" Text="硬件代号" Opacity="0.65"/>
+                                        <TextBlock x:Name="CodeValue" Text="—" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock x:Name="StateCaption" Text="连接状态" Opacity="0.65"/>
+                                        <TextBlock x:Name="StateValue" Text="—" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="VersionCaption" Text="Android 版本" Opacity="0.65"/>
+                                        <TextBlock x:Name="VersionValue" Text="—" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock x:Name="ToolStatus" Text="ADB / Fastboot：待检测"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <Button x:Name="ScanButton" Content="扫描设备" Style="{StaticResource AccentButtonStyle}"
+                                            Click="ScanButton_Click"/>
+                                    <ProgressRing x:Name="ScanProgress" IsActive="False" Width="22" Height="22"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="20">
+                            <StackPanel Spacing="10">
+                                <TextBlock x:Name="NextStepTitle" Text="接下来" FontSize="18" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="NextStepBody" Text="识别设备后，在 OTA 固件页面选择 ZIP，并执行兼容性预检。"
+                                           TextWrapping="Wrap" Opacity="0.78"/>
+                                <Button x:Name="OpenFirmwareButton" Content="选择 OTA 固件"
+                                        HorizontalAlignment="Left" Click="OpenFirmwareButton_Click"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer x:Name="FirmwarePanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20" MaxWidth="920">
+                        <StackPanel Spacing="5">
+                            <TextBlock x:Name="FirmwareTitle" Text="OTA 固件检查"
+                                       FontSize="30" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="FirmwareDescription" Text="本地读取 Android OTA 元数据并校验设备代号，不执行刷写。"
+                                       TextWrapping="Wrap" Opacity="0.75"/>
+                        </StackPanel>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="16">
+                                <TextBlock x:Name="PackageTitle" Text="选取 ZIP 固件" FontSize="20" FontWeight="SemiBold"/>
+                                <Button x:Name="PickPackageButton" Content="浏览本地 ZIP…" HorizontalAlignment="Left"
+                                        Click="PickPackageButton_Click"/>
+                                <ProgressRing x:Name="PackageProgress" IsActive="False" Height="22" Width="22" HorizontalAlignment="Left"/>
+                                <TextBlock x:Name="PackageName" Text="尚未选择" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="PackageCode" Text="目标设备：—" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="PackageType" Text="OTA 类型：—" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="PackageBuild" Text="目标版本：—" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="PackageHash" Text="SHA-256：—" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="12">
+                                <TextBlock x:Name="PreflightTitle" Text="兼容性预检" FontSize="20" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="PreflightResult" Text="先扫描设备并选择固件。" TextWrapping="Wrap"/>
+                                <Button x:Name="PreflightButton" Content="重新检查兼容性" HorizontalAlignment="Left"
+                                        Click="PreflightButton_Click"/>
+                                <InfoBar x:Name="ProvenanceWarning" IsOpen="True" IsClosable="False"
+                                         Severity="Warning" Title="未验证固件来源"
+                                         Message="本地 SHA-256 仅提供文件指纹，不代表已经验证 Google 签名。此版本不会写入设备。"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer x:Name="LogsPanel" Visibility="Collapsed">
+                    <StackPanel Spacing="16" MaxWidth="920">
+                        <TextBlock x:Name="LogsTitle" Text="诊断日志" FontSize="30" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="LogsDescription" Text="日志仅保留在当前应用会话，分享前请遮盖设备序列号和文件路径。"
+                                   TextWrapping="Wrap" Opacity="0.72"/>
+                        <TextBox x:Name="LogsText" TextWrapping="Wrap" IsReadOnly="True"
+                                 AcceptsReturn="True" Height="430" VerticalScrollBarVisibility="Auto"/>
+                        <Button x:Name="ClearLogsButton" Content="清空日志" HorizontalAlignment="Left" Click="ClearLogsButton_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer x:Name="AboutPanel" Visibility="Collapsed">
+                    <StackPanel Spacing="12" MaxWidth="920">
+                        <TextBlock Text="FlowAndroid" FontSize="30" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="AboutVersion" Text="0.1.0 · Diagnostic preview" Opacity="0.75"/>
+                        <TextBlock x:Name="AboutDescription" Text="面向 Pixel 的 Windows 原生 Android 维护工具。"
+                                   TextWrapping="Wrap"/>
+                        <HyperlinkButton Content="GitHub · KiYouJyo/FlowAndroid"
+                                         NavigateUri="https://github.com/KiYouJyo/FlowAndroid"/>
+                        <TextBlock Text="© 2026 KiYouJyo · MIT" Opacity="0.6"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </NavigationView>
+    </Grid>
+</Window>

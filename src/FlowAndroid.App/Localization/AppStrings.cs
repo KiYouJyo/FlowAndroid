@@ -1,0 +1,115 @@
+namespace FlowAndroid.Localization;
+
+/// <summary>Single string resolver; UI refreshes all affected controls in place.</summary>
+public static class AppStrings
+{
+    private static readonly Dictionary<string, Dictionary<string, string>> Strings = new()
+    {
+        ["zh-CN"] = new()
+        {
+            ["home"]="设备", ["firmware"]="OTA 固件", ["logs"]="诊断日志", ["about"]="关于",
+            ["language"]="界面语言", ["homeTitle"]="我的设备",
+            ["homeDesc"]="通过 USB 连接 Google Pixel，检查 ADB 与 Fastboot。",
+            ["bannerTitle"]="安全预览", ["bannerBody"]="本版本只检测设备和 OTA 兼容性，不会执行刷写、解锁或清除数据。",
+            ["deviceTitle"]="设备状态", ["unscanned"]="尚未扫描", ["model"]="机型",
+            ["code"]="硬件代号", ["state"]="连接状态", ["version"]="Android 版本",
+            ["tools"]="ADB / Fastboot", ["scan"]="扫描设备", ["scanning"]="正在检查 USB 设备…",
+            ["nextTitle"]="接下来", ["nextBody"]="识别设备后，在 OTA 固件页面选择 ZIP，并执行兼容性预检。",
+            ["selectOta"]="选择 OTA 固件", ["fwTitle"]="OTA 固件检查",
+            ["fwDesc"]="本地读取 Android OTA 元数据并校验设备代号，不执行刷写。",
+            ["packageTitle"]="选取 ZIP 固件", ["browse"]="浏览本地 ZIP…", ["noPackage"]="尚未选择",
+            ["target"]="目标设备", ["otaType"]="OTA 类型", ["build"]="目标版本",
+            ["preflight"]="兼容性预检", ["check"]="重新检查兼容性",
+            ["warningTitle"]="未验证固件来源",
+            ["warningBody"]="本地 SHA-256 仅提供文件指纹，不代表已经验证 Google 签名。此版本不会写入设备。",
+            ["logsTitle"]="诊断日志", ["logsDesc"]="日志仅保留在当前应用会话，分享前请遮盖设备序列号和文件路径。",
+            ["clear"]="清空日志", ["aboutDesc"]="面向 Pixel 的 Windows 原生 Android 维护工具。",
+            ["notFound"]="没有检测到设备。", ["devices"]="已检测设备数",
+            ["ready"]="设备与 OTA 代号匹配，但固件来源未验证，刷机尚未开放。",
+            ["ToolsUnavailable"]="ADB 不可用，请先安装 Android SDK Platform-Tools。",
+            ["NoDevice"]="未检测到设备，请连接 Pixel 并启用 USB 调试。",
+            ["MultipleDevices"]="检测到多个设备，请先断开其他设备。",
+            ["UnsupportedTransport"]="请先在正常 Android 系统下连接手机。",
+            ["NotAuthorized"]="请在手机上授权 USB 调试。",
+            ["NotPixel"]="目前仅支持能验证身份的 Google Pixel。",
+            ["IdentityUnknown"]="无法读取设备硬件代号。",
+            ["MissingPackage"]="请选择 Pixel 官方 OTA ZIP。",
+            ["FirmwareMismatch"]="固件代号与当前设备不匹配，已阻止继续操作。",
+            ["CompatibleForReview"]="硬件代号匹配。固件真实性尚未验证；当前版本禁止刷写。",
+            ["inspectError"]="固件读取失败", ["scanError"]="设备检测失败"
+        },
+        ["ja-JP"] = new()
+        {
+            ["home"]="デバイス", ["firmware"]="OTA ファームウェア", ["logs"]="診断ログ", ["about"]="アプリ情報",
+            ["language"]="表示言語", ["homeTitle"]="マイデバイス",
+            ["homeDesc"]="Google Pixel を USB で接続し、ADB と Fastboot を確認します。",
+            ["bannerTitle"]="安全プレビュー", ["bannerBody"]="このバージョンでは検出と互換性確認のみ実行します。書き込み・ロック解除・消去はできません。",
+            ["deviceTitle"]="デバイスの状態", ["unscanned"]="未スキャン", ["model"]="モデル",
+            ["code"]="デバイスコード名", ["state"]="接続状態", ["version"]="Android バージョン",
+            ["tools"]="ADB / Fastboot", ["scan"]="デバイスを検索", ["scanning"]="USB デバイスを確認中…",
+            ["nextTitle"]="次のステップ", ["nextBody"]="デバイスを識別した後、OTA ZIP を選択して互換性を確認します。",
+            ["selectOta"]="OTA ZIP を選ぶ", ["fwTitle"]="OTA ファームウェアの確認",
+            ["fwDesc"]="ローカル OTA のメタデータとコード名を検査します。書き込みは行いません。",
+            ["packageTitle"]="ZIP ファイルを選択", ["browse"]="ZIP を参照…", ["noPackage"]="未選択",
+            ["target"]="対象機種", ["otaType"]="OTA 種別", ["build"]="対象ビルド",
+            ["preflight"]="互換性チェック", ["check"]="互換性を再確認",
+            ["warningTitle"]="配布元未検証",
+            ["warningBody"]="ローカル SHA-256 はファイルの指紋であり、Google の署名検証ではありません。書き込みは無効です。",
+            ["logsTitle"]="診断ログ", ["logsDesc"]="ログはこのセッションにのみ保存されます。共有する前にシリアル番号とパスを伏せてください。",
+            ["clear"]="ログを消去", ["aboutDesc"]="Pixel 向けの Windows ネイティブ Android 管理ツール。",
+            ["notFound"]="デバイスは見つかりませんでした。", ["devices"]="検出したデバイス数",
+            ["ready"]="コード名は一致しますが、配布元は未検証です。書き込みはできません。",
+            ["ToolsUnavailable"]="ADB が利用できません。Android SDK Platform-Tools をインストールしてください。",
+            ["NoDevice"]="Pixel を接続し、USB デバッグを有効にしてください。",
+            ["MultipleDevices"]="複数のデバイスが接続されています。他のデバイスを取り外してください。",
+            ["UnsupportedTransport"]="通常の Android モードで接続してください。",
+            ["NotAuthorized"]="端末で USB デバッグを許可してください。",
+            ["NotPixel"]="現在、識別できる Google Pixel のみ対応しています。",
+            ["IdentityUnknown"]="デバイスコード名を取得できません。",
+            ["MissingPackage"]="Pixel 用の公式 OTA ZIP を選択してください。",
+            ["FirmwareMismatch"]="ファームウェアのコード名が一致しないため中止しました。",
+            ["CompatibleForReview"]="コード名は一致しますが、署名は未検証です。書き込みは無効です。",
+            ["inspectError"]="ファームウェアの確認に失敗", ["scanError"]="デバイス検出に失敗"
+        },
+        ["en-US"] = new()
+        {
+            ["home"]="Devices", ["firmware"]="OTA firmware", ["logs"]="Diagnostics", ["about"]="About",
+            ["language"]="Display language", ["homeTitle"]="My device",
+            ["homeDesc"]="Connect a Google Pixel by USB to inspect ADB and Fastboot.",
+            ["bannerTitle"]="Safe preview", ["bannerBody"]="This version only detects devices and checks OTA compatibility. Flashing, unlocking and wiping are disabled.",
+            ["deviceTitle"]="Device status", ["unscanned"]="Not scanned", ["model"]="Model",
+            ["code"]="Codename", ["state"]="Connection state", ["version"]="Android version",
+            ["tools"]="ADB / Fastboot", ["scan"]="Scan devices", ["scanning"]="Checking USB devices…",
+            ["nextTitle"]="Next steps", ["nextBody"]="Identify your device, select an OTA ZIP, then review compatibility.",
+            ["selectOta"]="Select OTA firmware", ["fwTitle"]="OTA firmware inspection",
+            ["fwDesc"]="Inspect local Android OTA metadata and compare device codenames. No flashing is performed.",
+            ["packageTitle"]="Choose a ZIP file", ["browse"]="Browse local ZIP…", ["noPackage"]="No package selected",
+            ["target"]="Target device", ["otaType"]="OTA type", ["build"]="Target build",
+            ["preflight"]="Compatibility preflight", ["check"]="Recheck compatibility",
+            ["warningTitle"]="Unverified firmware origin",
+            ["warningBody"]="Local SHA-256 is a fingerprint, not proof of Google's signature. Device writes are disabled.",
+            ["logsTitle"]="Diagnostic log", ["logsDesc"]="Logs stay in this app session. Redact serials and file paths before sharing.",
+            ["clear"]="Clear log", ["aboutDesc"]="Native Windows Android management software focused on Pixel.",
+            ["notFound"]="No devices detected.", ["devices"]="Connected devices",
+            ["ready"]="Codename matches, but provenance remains unverified. Flashing is disabled.",
+            ["ToolsUnavailable"]="ADB is unavailable. Install Android SDK Platform-Tools first.",
+            ["NoDevice"]="Connect a Pixel with USB debugging enabled.",
+            ["MultipleDevices"]="Multiple devices found; disconnect the others.",
+            ["UnsupportedTransport"]="Connect in normal Android mode first.",
+            ["NotAuthorized"]="Authorize USB debugging on your phone.",
+            ["NotPixel"]="Only recognized Google Pixel devices are supported.",
+            ["IdentityUnknown"]="Cannot read the device codename.",
+            ["MissingPackage"]="Select an official Pixel OTA ZIP.",
+            ["FirmwareMismatch"]="Firmware codename does not match this device; operation blocked.",
+            ["CompatibleForReview"]="Device codename matches. Firmware signature is not verified; writes are disabled.",
+            ["inspectError"]="Firmware inspection failed", ["scanError"]="Device scan failed"
+        }
+    };
+
+    public static string Get(string language, string key)
+    {
+        if (Strings.TryGetValue(language, out var dictionary) && dictionary.TryGetValue(key, out var value))
+            return value;
+        return Strings["en-US"].GetValueOrDefault(key, key);
+    }
+}
