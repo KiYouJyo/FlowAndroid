@@ -44,26 +44,47 @@ public static class GoogleFirmwareCatalog
     public static async Task<IReadOnlyList<OfficialFirmware>> FetchAsync(
         GoogleImageType type, CancellationToken ct = default)
     {
-        using var handler = new HttpClientHandler { AllowAutoRedirect = false };
-        using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(25) };
-        var page = type == GoogleImageType.Ota ? OtaUrl : FactoryUrl;
-        using var response = await http.GetAsync(page, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-        if (response.Content.Headers.ContentLength > 20_000_000)
-            throw new InvalidDataException("Official catalog response too large.");
-        await using var content = await response.Content.ReadAsStreamAsync(ct);
-        using var reader = new StreamReader(content);
-        var html = new System.Text.StringBuilder();
-        var buffer = new char[8192];
-        int n;
-        while ((n = await reader.ReadAsync(buffer.AsMemory(), ct)) > 0)
+        // Google may present a consent-only page to non-browser clients. Both fixed hosts
+        // below belong to Google; no caller-controlled URL is ever accepted.
+        var primary = type == GoogleImageType.Ota ? OtaUrl : FactoryUrl;
+        var secondary = type == GoogleImageType.Ota
+            ? "https://developers.google.cn/android/ota?hl=en"
+            : "https://developers.google.cn/android/images?hl=en";
+        Exception? lastError = null;
+        foreach (var page in new[] { primary, secondary })
         {
-            html.Append(buffer, 0, n);
-            if (html.Length > 20_000_000) throw new InvalidDataException("Catalog exceeded limit.");
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+                using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(25) };
+                using var response = await http.GetAsync(page, HttpCompletionOption.ResponseHeadersRead, ct);
+                response.EnsureSuccessStatusCode();
+                if (response.Content.Headers.ContentLength > 20_000_000)
+                    throw new InvalidDataException("Official catalog response too large.");
+                await using var content = await response.Content.ReadAsStreamAsync(ct);
+                using var reader = new StreamReader(content);
+                var html = new System.Text.StringBuilder();
+                var buffer = new char[8192];
+                int n;
+                while ((n = await reader.ReadAsync(buffer.AsMemory(), ct)) > 0)
+                {
+                    html.Append(buffer, 0, n);
+                    if (html.Length > 20_000_000)
+                        throw new InvalidDataException("Official catalog exceeded size limit.");
+                }
+                var parsed = Parse(html.ToString(), type);
+                if (parsed.Count == 0)
+                    throw new InvalidDataException("No trusted checksum rows found on this Google page.");
+                return parsed;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException)
+            {
+                lastError = ex;
+            }
         }
-        var parsed = Parse(html.ToString(), type);
-        if (parsed.Count == 0)
-            throw new InvalidDataException("Google's page has no recognized checksum rows. Flashing is blocked.");
-        return parsed;
+        throw new InvalidDataException(
+            "Unable to read a trusted Google SHA-256 catalog. Sideload remains disabled.", lastError);
     }
 }
