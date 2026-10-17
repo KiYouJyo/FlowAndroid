@@ -53,6 +53,9 @@ public sealed class PixelOtaTransfer
                 return new(TransferStage.Blocked, "Build timestamps unavailable; downgrade safety cannot be determined.");
             if (ota.PostTimestamp < original.Devices[0].BuildTimestamp)
                 return new(TransferStage.Blocked, "Older build is blocked to prevent unsupported downgrades.");
+            if (original.Devices[0].BatteryPercent < 50 || original.Devices[0].BatteryPercent > 100)
+                return new(TransferStage.Blocked,
+                    "Battery level is unknown or below 50%. Charge the device before updating.");
 
             var serial = original.Devices[0].Serial;
             progress?.Report(TransferStage.WaitingForRecovery);

@@ -5,7 +5,7 @@ Implementation exists but has **not** passed physical-device acceptance.
 1. Back up data, use one authorized Google Pixel and official Android SDK Platform-Tools.
 2. Download the correct full OTA ZIP from https://developers.google.com/android/ota after reading Google's license terms.
 3. Select it in FlowAndroid, compare the local SHA-256 with the published Google SHA-256 through the **Verify Google SHA-256 online** control.
-4. Confirm no pending OTA, sufficient battery, stable cable and compatible release. Downgrades are not supported.
+4. Confirm no pending OTA, stable cable and compatible release. The app requires a readable battery level of at least 50%, and forbids downgrades.
 5. Boot to Recovery manually and choose **Apply update from ADB**.
 6. Confirm backup, license terms and Recovery mode in the app; review a second modal confirmation.
 7. The app blocks unknown/older OTA build timestamps, re-hashes the ZIP, confirms one originally-bound serial in `sideload`, then sends `adb -s SERIAL sideload ZIP`. It never executes arbitrary downloaded scripts.

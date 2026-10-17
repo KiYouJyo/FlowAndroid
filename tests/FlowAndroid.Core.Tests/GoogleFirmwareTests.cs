@@ -50,7 +50,7 @@ public class GoogleFirmwareTests
             var trusted = new OfficialFirmware(GoogleImageType.Ota, filename, ota.Sha256,
                 new Uri("https://dl.google.com/dl/android/aosp/" + filename));
             var snapshot = new DeviceSnapshot(new(true, "ADB"), new(true, "Fastboot"),
-                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000, 75)]);
             var runner = new FakeRunner { Line = "wrong sideload" };
             var coordinator = new PixelOtaTransfer(runner);
             var result = await coordinator.RunAsync(snapshot, ota, [trusted], true, true, true);
@@ -102,7 +102,7 @@ public class GoogleFirmwareTests
                 package.Sha256, new Uri("https://dl.google.com/dl/android/aosp/" + filename));
             await File.AppendAllTextAsync(path, "corrupted");
             var device = new DeviceSnapshot(new(true, "adb"), new(true, "fastboot"),
-                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000, 75)]);
             var fake = new FakeRunner();
             var result = await new PixelOtaTransfer(fake).RunAsync(device, package, [official], true, true, true);
             Assert.Equal(TransferStage.Blocked, result.Stage);
@@ -128,7 +128,7 @@ public class GoogleFirmwareTests
             var official = new OfficialFirmware(GoogleImageType.Ota, filename,
                 package.Sha256, new Uri("https://dl.google.com/dl/android/aosp/" + filename));
             var device = new DeviceSnapshot(new(true, "adb"), new(true, "fastboot"),
-                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000, 75)]);
             var fake = new FakeRunner();
             var result = await new PixelOtaTransfer(fake).RunAsync(device, package, [official], true, true, true);
             Assert.Equal(TransferStage.Blocked, result.Stage);

@@ -63,6 +63,7 @@ public sealed partial class MainWindow : Window
         CodeCaption.Text = T("code");
         StateCaption.Text = T("state");
         VersionCaption.Text = T("version");
+        BatteryCaption.Text = T("battery");
         ScanButton.Content = T("scan");
         PlatformToolsLink.Content = T("platformToolsLink");
         NextStepTitle.Text = T("nextTitle");
@@ -220,6 +221,7 @@ public sealed partial class MainWindow : Window
         CodeValue.Text = string.IsNullOrWhiteSpace(device?.Codename) ? "—" : device.Codename;
         StateValue.Text = device is null ? "—" : device.Transport + " / " + device.State;
         VersionValue.Text = string.IsNullOrWhiteSpace(device?.AndroidVersion) ? "—" : device.AndroidVersion;
+        BatteryValue.Text = device?.BatteryPercent is >= 0 and <= 100 ? device.BatteryPercent + "%" : "—";
         ToolStatus.Text = T("tools") + ": " +
             (_snapshot is null ? "—" :
                 "ADB " + (_snapshot.Adb.Available ? "✓" : "✕") +

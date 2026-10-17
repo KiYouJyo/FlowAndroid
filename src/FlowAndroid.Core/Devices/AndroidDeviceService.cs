@@ -52,13 +52,15 @@ public sealed class AndroidDeviceService
                     var version = await GetPropAsync(device.Serial, "ro.build.version.release", token).ConfigureAwait(false);
                     var rawBuildDate = await GetPropAsync(device.Serial, "ro.build.date.utc", token).ConfigureAwait(false);
                     long.TryParse(rawBuildDate, out var buildTimestamp);
+                    var battery = await GetBatteryPercentAsync(device.Serial, token).ConfigureAwait(false);
                     devices.Add(device with
                     {
                         Codename = codename,
                         Model = model,
                         Manufacturer = manufacturer,
                         AndroidVersion = version,
-                        BuildTimestamp = buildTimestamp
+                        BuildTimestamp = buildTimestamp,
+                        BatteryPercent = battery
                     });
                 }
             }
@@ -89,6 +91,17 @@ public sealed class AndroidDeviceService
                 fastboot = new ToolHealth(false, list?.CombinedOutput.Trim() ?? "Fastboot device enumeration failed.");
         }
         return new DeviceSnapshot(adb, fastboot, devices);
+    }
+
+    private async Task<int> GetBatteryPercentAsync(string serial, CancellationToken token)
+    {
+        var result = await TryRunAsync(_adb,
+            ["-s", serial, "shell", "dumpsys", "battery"], token).ConfigureAwait(false);
+        if (result is not { Succeeded: true }) return -1;
+        var match = System.Text.RegularExpressions.Regex.Match(result.StandardOutput,
+            @"(?m)^\s*level:\s*(\d+)\s*$");
+        return match.Success && int.TryParse(match.Groups[1].Value, out var value) &&
+            value is >= 0 and <= 100 ? value : -1;
     }
 
     private async Task<string> GetPropAsync(string serial, string key, CancellationToken token)
