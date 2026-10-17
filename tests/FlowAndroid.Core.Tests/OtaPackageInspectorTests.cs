@@ -42,4 +42,16 @@ public class OtaPackageInspectorTests
         }
         finally { File.Delete(path); }
     }
+    [Fact]
+    public async Task RejectsOversizedCompressedMetadata()
+    {
+        var path = BuildZip("pre-device=shiba\n" + new string('x', 130_000));
+        try
+        {
+            await Assert.ThrowsAsync<InvalidDataException>(
+                () => new OtaPackageInspector().InspectAsync(path));
+        }
+        finally { File.Delete(path); }
+    }
+
 }

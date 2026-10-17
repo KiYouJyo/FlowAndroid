@@ -25,9 +25,16 @@ public sealed class OtaPackageInspector
             if (entry.Length <= 0 || entry.Length > MaxMetadataSize)
                 throw new InvalidDataException("Unexpected OTA metadata length.");
             using var reader = new StreamReader(entry.Open());
-            metadata = await reader.ReadToEndAsync(token).ConfigureAwait(false);
-            if (metadata.Length > MaxMetadataSize)
-                throw new InvalidDataException("OTA metadata exceeded the inspection limit.");
+            var buffer = new char[4096];
+            var text = new System.Text.StringBuilder();
+            int count;
+            while ((count = await reader.ReadAsync(buffer.AsMemory(), token).ConfigureAwait(false)) > 0)
+            {
+                if (text.Length + count > MaxMetadataSize)
+                    throw new InvalidDataException("OTA metadata decompressed beyond the inspection limit.");
+                text.Append(buffer, 0, count);
+            }
+            metadata = text.ToString();
         }
 
         var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
