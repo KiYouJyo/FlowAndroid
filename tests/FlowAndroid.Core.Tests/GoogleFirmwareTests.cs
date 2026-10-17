@@ -83,4 +83,58 @@ public class GoogleFirmwareTests
         }
         finally { File.Delete(path); }
     }
+
+    [Fact]
+    public async Task ChecksumTamperingIsRejectedBeforeAdbCommands()
+    {
+        var filename = "shiba-ota-test-" + Guid.NewGuid().ToString("N") + ".zip";
+        var path = Path.Combine(Path.GetTempPath(), filename);
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+        {
+            var e = zip.CreateEntry("META-INF/com/android/metadata");
+            using var writer = new StreamWriter(e.Open());
+            writer.Write("pre-device=shiba\nota-type=AB\npost-timestamp=1800000100");
+        }
+        try
+        {
+            var package = await new OtaPackageInspector().InspectAsync(path);
+            var official = new OfficialFirmware(GoogleImageType.Ota, filename,
+                package.Sha256, new Uri("https://dl.google.com/dl/android/aosp/" + filename));
+            await File.AppendAllTextAsync(path, "corrupted");
+            var device = new DeviceSnapshot(new(true, "adb"), new(true, "fastboot"),
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
+            var fake = new FakeRunner();
+            var result = await new PixelOtaTransfer(fake).RunAsync(device, package, [official], true, true, true);
+            Assert.Equal(TransferStage.Blocked, result.Stage);
+            Assert.Equal(0, fake.Count);
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task OlderOtaBuildIsBlockedBeforeRecoveryTransport()
+    {
+        var filename = "shiba-ota-test-" + Guid.NewGuid().ToString("N") + ".zip";
+        var path = Path.Combine(Path.GetTempPath(), filename);
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+        {
+            var e = zip.CreateEntry("META-INF/com/android/metadata");
+            using var writer = new StreamWriter(e.Open());
+            writer.Write("pre-device=shiba\nota-type=AB\npost-timestamp=1700000000");
+        }
+        try
+        {
+            var package = await new OtaPackageInspector().InspectAsync(path);
+            var official = new OfficialFirmware(GoogleImageType.Ota, filename,
+                package.Sha256, new Uri("https://dl.google.com/dl/android/aosp/" + filename));
+            var device = new DeviceSnapshot(new(true, "adb"), new(true, "fastboot"),
+                [new AndroidDevice("one", "adb", "device", "shiba", "Pixel 8", "Google", "16", 1800000000)]);
+            var fake = new FakeRunner();
+            var result = await new PixelOtaTransfer(fake).RunAsync(device, package, [official], true, true, true);
+            Assert.Equal(TransferStage.Blocked, result.Stage);
+            Assert.Equal(0, fake.Count);
+        }
+        finally { File.Delete(path); }
+    }
+
 }
