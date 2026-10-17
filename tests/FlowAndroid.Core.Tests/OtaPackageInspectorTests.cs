@@ -45,7 +45,7 @@ public class OtaPackageInspectorTests
     [Fact]
     public async Task RejectsOversizedCompressedMetadata()
     {
-        var path = BuildZip("pre-device=shiba\n" + new string('x', 130_000));
+        var path = BuildZip("pre-device=shiba\n" + new string('x', 200_000));
         try
         {
             await Assert.ThrowsAsync<InvalidDataException>(
