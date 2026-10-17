@@ -92,7 +92,7 @@ jobs:
           path: dist/*
           if-no-files-found: error
       - name: Publish signed hardware-accepted release candidate
-        if: ${{ inputs.sign_package == true }} && ${{ inputs.publish_candidate == true }} && ${{ inputs.hardware_accepted == true }}
+        if: ${{ inputs.sign_package == true && inputs.publish_candidate == true && inputs.hardware_accepted == true }}
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
