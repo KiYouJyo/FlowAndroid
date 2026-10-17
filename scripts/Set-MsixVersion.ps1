@@ -4,19 +4,23 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if ($BuildNumber -lt 1 -or $BuildNumber -gt 65535) {
- throw 'MSIX build revision must be in range 1–65535. Bump the version scheme before this limit.'
+    throw 'MSIX build revision must be within 1..65535.'
 }
 [xml]$doc = Get-Content $Manifest -Raw -Encoding UTF8
-$ns = New-Object System.Xml.XmlNamespaceManager($doc.NameTable)
+$ns = [System.Xml.XmlNamespaceManager]::new($doc.NameTable)
 $ns.AddNamespace('p','http://schemas.microsoft.com/appx/manifest/foundation/windows10')
-$ident = $doc.SelectSingleNode('/p:Package/p:Identity',$ns)
-if (!$ident) { throw 'MSIX Identity missing' }
-$version = $ident.GetAttribute('Version')
-$match = [regex]::Match($version, '^(\d+)\.(\d+)\.(\d+)\.(\d+)
+$identity = $doc.SelectSingleNode('/p:Package/p:Identity',$ns)
+if ($null -eq $identity) { throw 'Missing package identity.' }
+$version = $identity.GetAttribute('Version')
+$parts = $version.Split('.')
+if ($parts.Count -ne 4) { throw 'MSIX version must have four numeric fields.' }
+foreach ($part in $parts) {
+    $value = 0
+    if (-not [int]::TryParse($part,[ref]$value) -or $value -lt 0 -or $value -gt 65535) {
+        throw "Invalid MSIX version component."
+    }
+}
+$newVersion = '{0}.{1}.{2}.{3}' -f $parts[0],$parts[1],$parts[2],$BuildNumber
+$identity.SetAttribute('Version',$newVersion)
 $doc.Save((Join-Path (Get-Location) $Manifest))
-Write-Host "Build revision set to $BuildNumber."
-)
-if (!$match.Success) { throw 'Invalid 4-part version' }
-$ident.SetAttribute('Version', "$($match.Groups[1].Value).$($match.Groups[2].Value).$($match.Groups[3].Value).$BuildNumber")
-$doc.Save((Join-Path (Get-Location) $Manifest))
-Write-Host "Build revision set to $BuildNumber."
+Write-Host "MSIX version stamped: $newVersion"
