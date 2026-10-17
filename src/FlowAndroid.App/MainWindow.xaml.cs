@@ -119,6 +119,13 @@ public sealed partial class MainWindow : Window
 
     private async void ScanButton_Click(object sender, RoutedEventArgs e)
     {
+        // Any new scan invalidates the previous device-bound write approval.
+        _otaVerified = false;
+        _trustedCatalog = null;
+        BackupConsent.IsChecked = false;
+        RecoveryConsent.IsChecked = false;
+        OfficialResult.Text = T("officialPending");
+        UpdateSideloadButton();
         ScanButton.IsEnabled = false;
         ScanProgress.IsActive = true;
         DeviceSummary.Text = T("scanning");
@@ -164,6 +171,8 @@ public sealed partial class MainWindow : Window
             _package = null;
             _trustedCatalog = null;
             _otaVerified = false;
+            OfficialResult.Text = T("officialPending");
+            RecoveryConsent.IsChecked = false;
             UpdateSideloadButton();
             _package = await _inspector.InspectAsync(file.Path);
             AddLog("OTA metadata inspected: " + _package.DeviceCodename);
@@ -327,6 +336,7 @@ public sealed partial class MainWindow : Window
             // Never permit a second write using a stale approval or possibly changed device state.
             _otaVerified = false;
             _trustedCatalog = null;
+            OfficialResult.Text = T("officialPending");
             BackupConsent.IsChecked = false;
             RecoveryConsent.IsChecked = false;
             UpdateSideloadButton();
