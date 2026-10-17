@@ -7,6 +7,7 @@ public sealed class AndroidDeviceService
 {
     private readonly ICommandRunner _runner;
     private readonly string _adb;
+    public string AdbExecutable => _adb;
     private readonly string _fastboot;
 
     public AndroidDeviceService(ICommandRunner runner, string? toolDirectory = null)
