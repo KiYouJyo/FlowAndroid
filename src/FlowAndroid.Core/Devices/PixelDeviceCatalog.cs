@@ -17,7 +17,9 @@ public static class PixelDeviceCatalog
             ["comet"] = "Pixel 9 Pro Fold", ["tegu"] = "Pixel 9a",
             ["frankel"] = "Pixel 10", ["blazer"] = "Pixel 10 Pro",
             ["mustang"] = "Pixel 10 Pro XL", ["rango"] = "Pixel 10 Pro Fold",
-            ["stallion"] = "Pixel 10a"
+            ["stallion"] = "Pixel 10a",
+            ["cubs"] = "Pixel 11", ["grizzly"] = "Pixel 11 Pro",
+            ["kodiak"] = "Pixel 11 Pro XL", ["yogi"] = "Pixel 11 Pro Fold"
         };
 
     public static string? GetModel(string codename) =>

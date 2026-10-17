@@ -9,6 +9,8 @@ public class PixelDeviceCatalogTests
     [InlineData("shiba", "Pixel 8")]
     [InlineData("FRANKEL", "Pixel 10")]
     [InlineData("comet", "Pixel 9 Pro Fold")]
+    [InlineData("cubs", "Pixel 11")]
+    [InlineData("yogi", "Pixel 11 Pro Fold")]
     public void KnownCodenamesHaveInformationalLabels(string code, string name)
         => Assert.Equal(name, PixelDeviceCatalog.GetModel(code));
 
