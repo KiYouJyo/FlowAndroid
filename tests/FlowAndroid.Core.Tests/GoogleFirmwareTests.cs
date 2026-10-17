@@ -17,6 +17,8 @@ public class GoogleFirmwareTests
             $"<tr><td><a href=\"https://dl.google.com/dl/android/aosp/shiba-ota-y.zip\">Download</a></td><td>{h} {h}</td></tr>";
         var item = Assert.Single(GoogleFirmwareCatalog.Parse(html, GoogleImageType.Ota));
         Assert.Equal("shiba", item.Codename);
+        var cn = $"<tr><td><a href=\"https://googledownloads.cn/dl/android/aosp/cubs-ota-cd1a.261005.003-3324f260.zip\">Link</a></td><td>{new string('b', 64)}</td></tr>";
+        Assert.Equal("cubs", Assert.Single(GoogleFirmwareCatalog.Parse(cn, GoogleImageType.Ota)).Codename);
     }
 
     private sealed class FakeRunner : ICommandRunner

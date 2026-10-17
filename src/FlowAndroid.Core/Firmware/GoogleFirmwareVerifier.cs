@@ -16,7 +16,7 @@ public static class GoogleFirmwareVerifier
         if (!File.Exists(path)) return new(false, "Firmware file missing.");
         var name = Path.GetFileName(path);
         var matches = catalog.Where(x =>
-            x.Type == type && x.DownloadUrl.Scheme == "https" && x.DownloadUrl.Host == "dl.google.com" &&
+            x.Type == type && x.DownloadUrl.Scheme == "https" && (x.DownloadUrl.Host == "dl.google.com" || x.DownloadUrl.Host == "googledownloads.cn") &&
             x.DownloadUrl.AbsolutePath.StartsWith("/dl/android/aosp/", StringComparison.Ordinal) &&
             string.Equals(x.FileName, name, StringComparison.OrdinalIgnoreCase)).ToArray();
         if (matches.Length != 1 || matches[0].Sha256.Length != 64)

@@ -12,3 +12,5 @@ Implementation exists but has **not** passed physical-device acceptance.
 8. Check the phone's Recovery screen for installation success. Select **Reboot system now** on the phone manually, then verify Android version.
 
 **Limitations:** Google webpage layout changes fail closed; a matching hash is not a blanket guarantee of device rollback safety. Some devices may change serial in Recovery and are denied until binding is supported. The UI cannot guarantee a backup exists. It does not auto-downgrade or relock bootloaders. Transfer completion is not installation completion.
+
+Google’s official Chinese mirror at https://developers.google.cn/android/ota lists Pixel download links using googledownloads.cn, so the app accepts exactly those two fixed download hosts (dl.google.com and googledownloads.cn) after parsing the fixed Google Developers HTTPS catalog pages. Never trust user-supplied domains.

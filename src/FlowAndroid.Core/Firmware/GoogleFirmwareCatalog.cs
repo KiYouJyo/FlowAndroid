@@ -29,7 +29,7 @@ public static class GoogleFirmwareCatalog
             if (checksums.Count != 1) continue;
             var urls = Links.Matches(content);
             if (urls.Count != 1 || !Uri.TryCreate(urls[0].Groups[1].Value, UriKind.Absolute, out var url)) continue;
-            if (url.Scheme != "https" || url.Host != "dl.google.com" ||
+            if (url.Scheme != "https" || url.Host is not ("dl.google.com" or "googledownloads.cn") ||
                 !url.AbsolutePath.StartsWith("/dl/android/aosp/", StringComparison.Ordinal) ||
                 url.Query.Length != 0 || url.Fragment.Length != 0) continue;
             var name = Uri.UnescapeDataString(Path.GetFileName(url.AbsolutePath));
