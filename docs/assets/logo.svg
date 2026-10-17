@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="FlowAndroid logo">
+  <rect width="128" height="128" rx="28" fill="#202B36"/>
+  <rect x="39" y="16" width="50" height="96" rx="13" fill="none" stroke="#E6F1F5" stroke-width="7"/>
+  <path d="M50 38h28" stroke="#8DC9BA" stroke-width="7" stroke-linecap="round"/>
+  <path d="M50 59h28M50 80h19" stroke="#E6F1F5" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="64" cy="99" r="4" fill="#8DC9BA"/>
+</svg>
