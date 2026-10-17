@@ -64,6 +64,7 @@ public sealed partial class MainWindow : Window
         StateCaption.Text = T("state");
         VersionCaption.Text = T("version");
         ScanButton.Content = T("scan");
+        PlatformToolsLink.Content = T("platformToolsLink");
         NextStepTitle.Text = T("nextTitle");
         NextStepBody.Text = T("nextBody");
         OpenFirmwareButton.Content = T("selectOta");
