@@ -18,6 +18,8 @@ public sealed partial class MainWindow : Window
     private OtaPackage? _package;
     private IReadOnlyList<OfficialFirmware>? _trustedCatalog;
     private bool _otaVerified;
+    private string? _postInstallExpected;
+    private string? _postInstallSerial;
     private readonly StringBuilder _history = new();
     private string _language = "zh-CN";
 
@@ -92,6 +94,7 @@ public sealed partial class MainWindow : Window
         TermsConsent.Content = T("termsConsent");
         RecoveryConsent.Content = T("recoveryConsent");
         StartSideloadButton.Content = T("sideloadStart");
+        VerifyPostInstallButton.Content = T("postInstallButton");
         if (SideloadStatus.Text.Length == 0) SideloadStatus.Text = T("sideloadHint");
         FactoryTitle.Text = T("factoryTitle");
         FactoryWarning.Text = T("factoryWarning");
@@ -315,6 +318,9 @@ public sealed partial class MainWindow : Window
         ScanButton.IsEnabled = false;
         PickPackageButton.IsEnabled = false;
         VerifyOfficialButton.IsEnabled = false;
+        VerifyPostInstallButton.IsEnabled = false;
+        _postInstallExpected = null;
+        _postInstallSerial = null;
         SideloadStatus.Text = T("otaRunning");
         try
         {
@@ -324,6 +330,12 @@ public sealed partial class MainWindow : Window
                 TermsConsent.IsChecked == true,
                 RecoveryConsent.IsChecked == true);
             SideloadStatus.Text = result.Detail;
+            if (result.Stage == TransferStage.TransferDone && _package is not null && _snapshot?.Devices.Count == 1)
+            {
+                _postInstallExpected = _package.Build;
+                _postInstallSerial = _snapshot.Devices[0].Serial;
+                VerifyPostInstallButton.IsEnabled = true;
+            }
             AddLog("OTA transfer result: " + result.Stage + " / " + result.Detail);
         }
         catch (Exception ex)
@@ -343,6 +355,28 @@ public sealed partial class MainWindow : Window
             BackupConsent.IsChecked = false;
             RecoveryConsent.IsChecked = false;
             UpdateSideloadButton();
+        }
+    }
+
+    private async void VerifyPostInstall_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_postInstallExpected) || string.IsNullOrEmpty(_postInstallSerial))
+            return;
+        VerifyPostInstallButton.IsEnabled = false;
+        try
+        {
+            var snapshot = await _devices.ScanAsync();
+            var result = PixelPostInstallCheck.Evaluate(snapshot, _postInstallSerial, _postInstallExpected);
+            SideloadStatus.Text = result.Success ? T("postInstallSuccess") : T("postInstallBlocked") + " " + result.Description;
+            AddLog("Post-install verification: " + result.Status);
+            // Verification button can be reused after manually addressing a not-booted state.
+            if (!result.Success)
+                VerifyPostInstallButton.IsEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            SideloadStatus.Text = T("postInstallBlocked") + " " + ex.Message;
+            VerifyPostInstallButton.IsEnabled = true;
         }
     }
 

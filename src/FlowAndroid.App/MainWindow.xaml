@@ -173,6 +173,8 @@
                                         IsEnabled="False" HorizontalAlignment="Left" Click="StartSideload_Click"/>
                                 <TextBlock x:Name="SideloadStatus" Text="传输完成后仍需在手机 Recovery 屏幕确认安装结果。"
                                            TextWrapping="Wrap" Opacity="0.72"/>
+                                <Button x:Name="VerifyPostInstallButton" Content="重启后验证系统版本"
+                                        HorizontalAlignment="Left" IsEnabled="False" Click="VerifyPostInstall_Click"/>
                                 <InfoBar x:Name="ProvenanceWarning" IsOpen="True" IsClosable="False"
                                          Severity="Warning" Title="未验证固件来源"
                                          Message="本地 SHA-256 仅提供文件指纹，不代表已经验证 Google 签名。此版本不会写入设备。"/>

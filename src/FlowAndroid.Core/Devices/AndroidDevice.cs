@@ -9,7 +9,8 @@ public sealed record AndroidDevice(
     string Manufacturer = "",
     string AndroidVersion = "",
     long BuildTimestamp = 0,
-    int BatteryPercent = -1)
+    int BatteryPercent = -1,
+    string BuildFingerprint = "")
 {
     public bool IsOnlineAdb => Transport == "adb" && State == "device";
     public bool IsGooglePixel =>

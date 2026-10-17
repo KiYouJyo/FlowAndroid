@@ -53,6 +53,7 @@ public sealed class AndroidDeviceService
                     var rawBuildDate = await GetPropAsync(device.Serial, "ro.build.date.utc", token).ConfigureAwait(false);
                     long.TryParse(rawBuildDate, out var buildTimestamp);
                     var battery = await GetBatteryPercentAsync(device.Serial, token).ConfigureAwait(false);
+                    var fingerprint = await GetPropAsync(device.Serial, "ro.build.fingerprint", token).ConfigureAwait(false);
                     devices.Add(device with
                     {
                         Codename = codename,
@@ -60,7 +61,8 @@ public sealed class AndroidDeviceService
                         Manufacturer = manufacturer,
                         AndroidVersion = version,
                         BuildTimestamp = buildTimestamp,
-                        BatteryPercent = battery
+                        BatteryPercent = battery,
+                        BuildFingerprint = fingerprint
                     });
                 }
             }
