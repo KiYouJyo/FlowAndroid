@@ -34,12 +34,12 @@ public sealed class StorePackageUpdater
     {
         if (_available.Count == 0) throw new InvalidOperationException("No Microsoft Store updates are available.");
         var operation = GetContext().RequestDownloadAndInstallStorePackageUpdatesAsync(_available);
-        var storeProgress = new Progress<StorePackageUpdateStatus>(x =>
+        operation.Progress = (_, status) =>
         {
-            var fraction = x.TotalDownloadProgress;
+            var fraction = status.TotalDownloadProgress;
             progress?.Report(fraction is >= 0 and <= 1 ? fraction : null);
-        });
-        var result = await operation.AsTask(CancellationToken.None, storeProgress);
+        };
+        var result = await operation;
         return result.OverallState == StorePackageUpdateState.Completed;
     }
 }
