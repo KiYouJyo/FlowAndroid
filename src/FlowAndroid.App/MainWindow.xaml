@@ -26,7 +26,7 @@
                 <NavigationViewItem x:Name="HomeNav" Tag="home" Content="设备">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Home" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="FirmwareNav" Tag="firmware" Content="OTA 固件">
+                <NavigationViewItem x:Name="FirmwareNav" Tag="firmware" Content="刷机向导">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Download" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem x:Name="LogsNav" Tag="logs" Content="诊断日志">
@@ -115,16 +115,74 @@
                 <ScrollViewer x:Name="FirmwarePanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="20" MaxWidth="920">
                         <StackPanel Spacing="5">
-                            <TextBlock x:Name="FirmwareTitle" Text="OTA 固件检查"
+                            <TextBlock x:Name="FirmwareTitle" Text="Pixel 更新与恢复向导"
                                        FontSize="30" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="FirmwareDescription" Text="本地读取 Android OTA 元数据并校验设备代号，不执行刷写。"
+                            <TextBlock x:Name="FirmwareDescription" Text="按照步骤连接设备、选择官方 OTA、校验固件、在 Recovery 中更新并验证安装结果。"
                                        TextWrapping="Wrap" Opacity="0.75"/>
                         </StackPanel>
+                        <InfoBar x:Name="WizardInfo" IsOpen="True" IsClosable="False"
+                                 Severity="Informational" Title="官方 OTA 更新 · 新手引导"
+                                 Message="无需解锁 Bootloader，通常不会抹除数据。只推荐识别到的稳定版；机型、变体或版本有疑点时不自动选择。" />
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="12">
+                                <TextBlock x:Name="WizardStep1Title" Text="① 连接并识别 Pixel"
+                                           FontSize="19" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="WizardStep1Help"
+                                           Text="打开手机的开发者选项和 USB 调试，用数据线连接电脑，并在手机上允许此电脑的调试请求。"
+                                           TextWrapping="Wrap" Opacity="0.76"/>
+                                <TextBlock x:Name="WizardDeviceStatus" Text="尚未连接 Pixel。"
+                                           TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <Button x:Name="WizardScanButton" Content="自动检查连接" Click="WizardScan_Click"/>
+                                    <Button x:Name="WizardDemoButton" Content="无手机？先预览步骤" Click="WizardDemo_Click"/>
+                                </StackPanel>
+                                <TextBlock x:Name="WizardDemoText" Visibility="Collapsed"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="12">
+                                <TextBlock x:Name="WizardStep2Title" Text="② 选择 Google 官方完整 OTA"
+                                           FontSize="19" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="WizardStep2Help"
+                                           Text="读取官方目录，只显示与你的 Pixel 代号匹配的稳定版。发现同日多个地区变体时停止自动推荐。"
+                                           TextWrapping="Wrap" Opacity="0.76"/>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button x:Name="WizardFindButton" Content="自动查找适配固件"
+                                            Click="WizardFind_Click"/>
+                                    <ProgressRing x:Name="WizardFindProgress" Width="22" Height="22" IsActive="False"/>
+                                </StackPanel>
+                                <TextBlock x:Name="WizardChoiceStatus" Text="连接手机后可自动查找。"
+                                           TextWrapping="Wrap"/>
+                                <ComboBox x:Name="WizardCandidateCombo" Header="官方目录中的稳定版候选"
+                                          HorizontalAlignment="Stretch" IsEnabled="False"
+                                          SelectionChanged="WizardCandidate_SelectionChanged"/>
+                                <TextBlock x:Name="WizardDownloadNote" Text="将保存到用户本地固件缓存；只在与 Google 公布的 SHA-256 完全一致时接受。"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <Button x:Name="WizardDownloadButton" Content="下载并自动校验"
+                                            IsEnabled="False" Click="WizardDownload_Click"/>
+                                    <Button x:Name="WizardCancelButton" Content="取消下载"
+                                            Visibility="Collapsed" Click="WizardCancel_Click"/>
+                                </StackPanel>
+                                <ProgressBar x:Name="WizardDownloadProgress" Minimum="0" Maximum="100"
+                                             Value="0" Visibility="Collapsed" Height="5"/>
+                                <TextBlock x:Name="WizardDownloadStatus" Text="尚未下载。"
+                                           TextWrapping="Wrap"/>
+                                <HyperlinkButton x:Name="WizardOfficialLink" Content="在 Google 官网检查所有版本及地区说明"
+                                    NavigateUri="https://developers.google.com/android/ota" Padding="0"
+                                    HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="12" Padding="24">
                             <StackPanel Spacing="16">
-                                <TextBlock x:Name="PackageTitle" Text="选取 ZIP 固件" FontSize="20" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="PackageTitle" Text="③ 校验已下载或本地固件" FontSize="20" FontWeight="SemiBold"/>
                                 <Button x:Name="PickPackageButton" Content="浏览本地 ZIP…" HorizontalAlignment="Left"
                                         Click="PickPackageButton_Click"/>
                                 <ProgressRing x:Name="PackageProgress" IsActive="False" Height="22" Width="22" HorizontalAlignment="Left"/>
@@ -139,7 +197,7 @@
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="12" Padding="24">
                             <StackPanel Spacing="12">
-                                <TextBlock x:Name="PreflightTitle" Text="兼容性预检" FontSize="20" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="PreflightTitle" Text="④ 检查风险、进入 Recovery 与传输" FontSize="20" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="PreflightResult" Text="先扫描设备并选择固件。" TextWrapping="Wrap"/>
                                 <Button x:Name="PreflightButton" Content="重新检查兼容性" HorizontalAlignment="Left"
                                         Click="PreflightButton_Click"/>
@@ -158,10 +216,10 @@
                                 <TextBlock x:Name="OfficialResult" Text="尚未核验" TextWrapping="Wrap"/>
                                 <HyperlinkButton Content="Google 官方完整 OTA 列表"
                                     NavigateUri="https://developers.google.com/android/ota" Padding="0"/>
-                                <TextBlock x:Name="SideloadTitle" Text="人工引导：Recovery Sideload"
+                                <TextBlock x:Name="SideloadTitle" Text="Recovery 操作说明"
                                            FontSize="16" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="SideloadInstructions"
-                                           Text="先备份手机，阅读 Google 官方说明。在 Pixel 上进入 Recovery，选择 Apply update from ADB 后，再确认以下选项。系统只允许经 Google 公布的 SHA-256 校验过的 ZIP。"
+                                           Text="步骤：手机保持连接 → 通过按键进入 Recovery → 如出现红色感叹号，按住电源并点按音量上 → 选择 Apply update from ADB → 回到电脑确认传输。手机操作完毕后才允许开始。"
                                            TextWrapping="Wrap"/>
                                 <CheckBox x:Name="BackupConsent" Content="我已备份需要保留的数据"
                                           Checked="OtaConsentChanged" Unchecked="OtaConsentChanged"/>
@@ -185,7 +243,7 @@
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="12" Padding="24">
                             <StackPanel Spacing="12">
-                                <TextBlock x:Name="FactoryTitle" Text="出厂映像：只读安全检查"
+                                <TextBlock x:Name="FactoryTitle" Text="高级：Factory Image（仅检查，不执行刷写）"
                                            FontWeight="SemiBold" FontSize="20"/>
                                 <TextBlock x:Name="FactoryWarning"
                                            Text="Factory Image 可能清除所有个人数据，且存在反回滚限制。当前提供官方 SHA-256、压缩包结构和设备代号检查，禁用自动分区刷写。"

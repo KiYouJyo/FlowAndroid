@@ -18,6 +18,10 @@ public sealed partial class MainWindow : Window
     private OtaPackage? _package;
     private IReadOnlyList<OfficialFirmware>? _trustedCatalog;
     private bool _otaVerified;
+    private IReadOnlyList<OfficialFirmware>? _wizardCatalog;
+    private FirmwareChoice? _wizardChoice;
+    private OfficialFirmware? _wizardSelected;
+    private CancellationTokenSource? _downloadCancellation;
     private string? _postInstallExpected;
     private string? _postInstallSerial;
     private readonly StringBuilder _history = new();
@@ -57,6 +61,20 @@ public sealed partial class MainWindow : Window
         AboutNav.Content = T("about");
         LanguageCaption.Text = T("language");
         HomeTitle.Text = T("homeTitle");
+        WizardInfo.Title = T("wizardInfoTitle");
+        WizardInfo.Message = T("wizardInfoBody");
+        WizardStep1Title.Text = T("wizardStep1");
+        WizardStep1Help.Text = T("wizardStep1Help");
+        WizardScanButton.Content = T("wizardScan");
+        WizardDemoButton.Content = T("wizardDemo");
+        WizardStep2Title.Text = T("wizardStep2");
+        WizardStep2Help.Text = T("wizardStep2Help");
+        WizardFindButton.Content = T("wizardFind");
+        WizardCandidateCombo.Header = T("wizardCandidates");
+        WizardDownloadNote.Text = T("wizardDownloadNote");
+        WizardDownloadButton.Content = T("wizardDownload");
+        WizardCancelButton.Content = T("wizardCancel");
+        WizardOfficialLink.Content = T("wizardOfficialLink");
         HomeDescription.Text = T("homeDesc");
         SafetyBanner.Title = T("bannerTitle");
         SafetyBanner.Message = T("bannerBody");
@@ -104,6 +122,7 @@ public sealed partial class MainWindow : Window
         UpdateDeviceDetails();
         UpdatePackageDetails();
         UpdatePreflight();
+        RefreshWizardDeviceStatus();
     }
 
     private void Navigation_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -132,6 +151,7 @@ public sealed partial class MainWindow : Window
         OfficialResult.Text = T("officialPending");
         UpdateSideloadButton();
         ScanButton.IsEnabled = false;
+        WizardScanButton.IsEnabled = false;
         ScanProgress.IsActive = true;
         DeviceSummary.Text = T("scanning");
         try
@@ -152,7 +172,15 @@ public sealed partial class MainWindow : Window
         finally
         {
             ScanButton.IsEnabled = true;
+            WizardScanButton.IsEnabled = true;
             ScanProgress.IsActive = false;
+            _wizardChoice = null;
+            _wizardSelected = null;
+            _wizardCatalog = null;
+            WizardCandidateCombo.Items.Clear();
+            WizardCandidateCombo.IsEnabled = false;
+            WizardDownloadButton.IsEnabled = false;
+            RefreshWizardDeviceStatus();
             UpdateDeviceDetails();
             UpdatePreflight();
         }
@@ -250,6 +278,193 @@ public sealed partial class MainWindow : Window
         PreflightResult.Text = T(assessment.Status.ToString());
     }
 
+
+
+    private void RefreshWizardDeviceStatus()
+    {
+        if (WizardDeviceStatus is null) return;
+        if (_snapshot is { HasOneOnlinePixel: true } && _snapshot.Devices.Count == 1)
+        {
+            var d = _snapshot.Devices[0];
+            WizardDeviceStatus.Text = T("wizardDeviceReady") + ": " + d.Model + " (" + d.Codename + "), " +
+                T("battery") + ": " + (d.BatteryPercent < 0 ? "—" : d.BatteryPercent + "%");
+            WizardFindButton.IsEnabled = true;
+        }
+        else
+        {
+            WizardDeviceStatus.Text = _snapshot?.Devices.Count > 1
+                ? T("wizardMultipleDevices") : T("wizardNoDevice");
+            WizardFindButton.IsEnabled = false;
+        }
+    }
+
+    private void WizardScan_Click(object sender, RoutedEventArgs e)
+    {
+        ScanButton_Click(sender, e);
+    }
+
+    private void WizardDemo_Click(object sender, RoutedEventArgs e)
+    {
+        WizardDemoText.Visibility = WizardDemoText.Visibility == Visibility.Visible
+            ? Visibility.Collapsed : Visibility.Visible;
+        WizardDemoText.Text = T("wizardDemoSteps");
+        // Never create fake ADB state or populate trust/catalog fields in demo mode.
+        AddLog("Tutorial preview opened (no device commands or writes).");
+    }
+
+    private async void WizardFind_Click(object sender, RoutedEventArgs e)
+    {
+        if (_snapshot is not { HasOneOnlinePixel: true }) return;
+        WizardFindButton.IsEnabled = false;
+        WizardFindProgress.IsActive = true;
+        _wizardChoice = null;
+        _wizardSelected = null;
+        _wizardCatalog = null;
+        WizardCandidateCombo.Items.Clear();
+        WizardCandidateCombo.IsEnabled = false;
+        WizardDownloadButton.IsEnabled = false;
+        try
+        {
+            var catalog = await GoogleFirmwareCatalog.FetchAsync(GoogleImageType.Ota);
+            _wizardCatalog = catalog;
+            var choice = GuidedFirmwarePlanner.Choose(_snapshot, catalog);
+            _wizardChoice = choice;
+            WizardChoiceStatus.Text = choice.Status switch
+            {
+                GuideChoiceStatus.ReadyToDownload => T("wizardSuggested"),
+                GuideChoiceStatus.ReviewVariants => T("wizardVariantsBlocked"),
+                GuideChoiceStatus.NoStableBuild => T("wizardNoStable"),
+                _ => choice.Explanation
+            };
+            foreach (var image in choice.Candidates.Take(25))
+            {
+                WizardCandidateCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = image.FileName,
+                    Tag = image
+                });
+            }
+            WizardCandidateCombo.IsEnabled = choice.Suggested is not null;
+            if (choice.Suggested is not null)
+            {
+                for (int i = 0; i < WizardCandidateCombo.Items.Count; ++i)
+                {
+                    if ((WizardCandidateCombo.Items[i] as ComboBoxItem)?.Tag is OfficialFirmware item &&
+                        item.FileName == choice.Suggested.FileName)
+                    {
+                        WizardCandidateCombo.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            AddLog("Google OTA catalog read: " + catalog.Count +
+                " entries; planner result: " + choice.Status);
+        }
+        catch (Exception ex)
+        {
+            WizardChoiceStatus.Text = T("wizardFindFailed") + " " + ex.Message;
+            AddLog("Wizard catalog request failed: " + ex.Message);
+        }
+        finally
+        {
+            WizardFindButton.IsEnabled = _snapshot?.HasOneOnlinePixel == true;
+            WizardFindProgress.IsActive = false;
+            RefreshWizardDownloadEligibility();
+        }
+    }
+
+    private void WizardCandidate_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _wizardSelected = (WizardCandidateCombo?.SelectedItem as ComboBoxItem)?.Tag as OfficialFirmware;
+        RefreshWizardDownloadEligibility();
+    }
+
+    private void RefreshWizardDownloadEligibility()
+    {
+        if (WizardDownloadButton is null) return;
+        WizardDownloadButton.IsEnabled = _downloadCancellation is null &&
+            _wizardChoice?.Status == GuideChoiceStatus.ReadyToDownload &&
+            _wizardChoice.Suggested is not null && _wizardSelected is not null &&
+            string.Equals(_wizardSelected.FileName, _wizardChoice.Suggested.FileName, StringComparison.Ordinal) &&
+            _snapshot is { HasOneOnlinePixel: true } &&
+            _wizardSelected.Codename.Equals(_snapshot.Devices[0].Codename, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async void WizardDownload_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = _wizardSelected;
+        var catalog = _wizardCatalog;
+        if (selected is null || catalog is null || WizardDownloadButton.IsEnabled == false)
+            return;
+        _downloadCancellation = new CancellationTokenSource();
+        _otaVerified = false;
+        _trustedCatalog = null;
+        _package = null;
+        RecoveryConsent.IsChecked = false;
+        BackupConsent.IsChecked = false;
+        UpdatePackageDetails();
+        UpdateSideloadButton();
+        WizardCancelButton.Visibility = Visibility.Visible;
+        WizardDownloadProgress.Visibility = Visibility.Visible;
+        WizardDownloadProgress.IsIndeterminate = true;
+        WizardDownloadStatus.Text = T("wizardDownloading");
+        RefreshWizardDownloadEligibility();
+        try
+        {
+            var root = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "FlowAndroid", "OfficialOTA");
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(40) };
+            var progress = new Progress<FirmwareDownloadProgress>(p =>
+            {
+                if (p.Percent is int percent)
+                {
+                    WizardDownloadProgress.IsIndeterminate = false;
+                    WizardDownloadProgress.Value = percent;
+                    WizardDownloadStatus.Text = T("wizardDownloading") + " " + percent + "%";
+                }
+            });
+            var localPath = await new VerifiedFirmwareDownloader(http).DownloadAsync(
+                selected, root, progress, _downloadCancellation.Token);
+            var inspected = await _inspector.InspectAsync(localPath, _downloadCancellation.Token);
+            var verified = await GoogleFirmwareVerifier.VerifyAsync(
+                localPath, GoogleImageType.Ota, catalog, _downloadCancellation.Token);
+            if (!verified.Verified || !inspected.DeviceCodename.Split(['|', ','])
+                    .Any(code => code.Trim().Equals(selected.Codename, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidDataException("Downloaded ZIP identity or checksum did not verify.");
+            _package = inspected;
+            _trustedCatalog = catalog;
+            _otaVerified = true;
+            WizardDownloadProgress.IsIndeterminate = false;
+            WizardDownloadProgress.Value = 100;
+            WizardDownloadStatus.Text = T("wizardDownloadDone") + " " + selected.FileName;
+            OfficialResult.Text = T("officialVerified");
+            UpdatePackageDetails();
+            UpdatePreflight();
+            UpdateSideloadButton();
+            AddLog("Official OTA downloaded and verified: " + selected.FileName);
+        }
+        catch (OperationCanceledException)
+        {
+            WizardDownloadStatus.Text = T("wizardCancelled");
+        }
+        catch (Exception ex)
+        {
+            WizardDownloadStatus.Text = T("wizardDownloadFailed") + " " + ex.Message;
+            AddLog("OTA download error: " + ex.Message);
+        }
+        finally
+        {
+            _downloadCancellation.Dispose();
+            _downloadCancellation = null;
+            WizardCancelButton.Visibility = Visibility.Collapsed;
+            WizardDownloadProgress.IsIndeterminate = false;
+            RefreshWizardDownloadEligibility();
+        }
+    }
+
+    private void WizardCancel_Click(object sender, RoutedEventArgs e) =>
+        _downloadCancellation?.Cancel();
 
     private void UpdateSideloadButton()
     {
