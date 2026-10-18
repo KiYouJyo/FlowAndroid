@@ -57,7 +57,7 @@ public sealed partial class MainWindow : Window
     private void ApplyLanguage()
     {
         HomeNav.Content = T("home");
-        FirmwareNav.Content = T("firmware");
+        FirmwareNav.Content = T("guideLabel");
         LogsNav.Content = T("logs");
         AboutNav.Content = T("about");
         LanguageCaption.Text = T("language");
@@ -89,10 +89,10 @@ public sealed partial class MainWindow : Window
         ScanButton.Content = T("scan");
         PlatformToolsLink.Content = T("platformToolsLink");
         NextStepTitle.Text = T("nextTitle");
-        NextStepBody.Text = T("nextBody");
-        OpenFirmwareButton.Content = T("selectOta");
-        FirmwareTitle.Text = T("fwTitle");
-        FirmwareDescription.Text = T("fwDesc");
+        NextStepBody.Text = T("startWizardHint");
+        OpenFirmwareButton.Content = T("beginWizard");
+        FirmwareTitle.Text = T("guideHeading");
+        FirmwareDescription.Text = T("guideDesc");
         PackageTitle.Text = T("packageTitle");
         PickPackageButton.Content = T("browse");
         PreflightTitle.Text = T("preflight");
@@ -157,6 +157,7 @@ public sealed partial class MainWindow : Window
         UpdateSideloadButton();
         ScanButton.IsEnabled = false;
         WizardScanButton.IsEnabled = false;
+        WizardFindButton.IsEnabled = false;
         ScanProgress.IsActive = true;
         DeviceSummary.Text = T("scanning");
         try
@@ -407,6 +408,12 @@ public sealed partial class MainWindow : Window
         UpdatePackageDetails();
         UpdateSideloadButton();
         WizardCancelButton.Visibility = Visibility.Visible;
+        ScanButton.IsEnabled = false;
+        WizardScanButton.IsEnabled = false;
+        WizardFindButton.IsEnabled = false;
+        PickPackageButton.IsEnabled = false;
+        VerifyOfficialButton.IsEnabled = false;
+        WizardCandidateCombo.IsEnabled = false;
         WizardDownloadProgress.Visibility = Visibility.Visible;
         WizardDownloadProgress.IsIndeterminate = true;
         WizardDownloadStatus.Text = T("wizardDownloading");
@@ -460,6 +467,12 @@ public sealed partial class MainWindow : Window
             _downloadCancellation.Dispose();
             _downloadCancellation = null;
             WizardCancelButton.Visibility = Visibility.Collapsed;
+            ScanButton.IsEnabled = true;
+            WizardScanButton.IsEnabled = true;
+            PickPackageButton.IsEnabled = true;
+            VerifyOfficialButton.IsEnabled = true;
+            RefreshWizardDeviceStatus();
+            WizardCandidateCombo.IsEnabled = _wizardChoice?.Suggested is not null;
             WizardDownloadProgress.IsIndeterminate = false;
             RefreshWizardDownloadEligibility();
         }
@@ -580,6 +593,8 @@ public sealed partial class MainWindow : Window
         PickPackageButton.IsEnabled = false;
         VerifyOfficialButton.IsEnabled = false;
         VerifyPostInstallButton.IsEnabled = false;
+        SideloadActivity.IsActive = true;
+        EnterRecoveryButton.IsEnabled = false;
         _postInstallExpected = null;
         _postInstallSerial = null;
         SideloadStatus.Text = T("otaRunning");
@@ -609,6 +624,7 @@ public sealed partial class MainWindow : Window
             ScanButton.IsEnabled = true;
             PickPackageButton.IsEnabled = true;
             VerifyOfficialButton.IsEnabled = true;
+            SideloadActivity.IsActive = false;
             // Never permit a second write using a stale approval or possibly changed device state.
             _otaVerified = false;
             _trustedCatalog = null;

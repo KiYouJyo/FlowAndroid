@@ -233,6 +233,8 @@
                                           Checked="OtaConsentChanged" Unchecked="OtaConsentChanged"/>
                                 <Button x:Name="StartSideloadButton" Content="验证后开始 OTA 传输"
                                         IsEnabled="False" HorizontalAlignment="Left" Click="StartSideload_Click"/>
+                                <ProgressRing x:Name="SideloadActivity" Width="26" Height="26"
+                                              IsActive="False" HorizontalAlignment="Left"/>
                                 <TextBlock x:Name="SideloadStatus" Text="传输完成后仍需在手机 Recovery 屏幕确认安装结果。"
                                            TextWrapping="Wrap" Opacity="0.72"/>
                                 <Button x:Name="VerifyPostInstallButton" Content="重启后验证系统版本"
