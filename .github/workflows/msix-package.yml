@@ -8,11 +8,11 @@ on:
       release_version:
         type: string
         default: '0.1.0'
-        description: 'Product release version (major.minor.patch); used only when manually publishing stable'
+        description: Product version major.minor.patch
       publish_stable:
         type: boolean
         default: false
-        description: 'Publish GitHub stable update for in-app updater ONLY after physical acceptance'
+        description: Stable release only after signed physical hardware acceptance
       sign_package:
         type: boolean
         default: false
@@ -43,7 +43,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:FLOWANDROID_RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+        shell: pwsh
+          if ($env:FLOWANDROID_RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw 'release_version must be major.minor.patch'
+          }
+          if ("${{ inputs.publish_stable }}" -eq "true" -and
+              ("${{ inputs.sign_package }}" -ne "true" -or "${{ inputs.hardware_accepted }}" -ne "true")) {
+            throw 'Stable release requires a signed build and confirmed physical acceptance.'
+          }
+      - name: Validate packaging resources
+        shell: pwsh
         run: ./scripts/Check-MsixPackage.ps1
       - name: Test
         run: dotnet test tests/FlowAndroid.Core.Tests/FlowAndroid.Core.Tests.csproj -c Release
@@ -90,7 +98,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Signing failed.' }
           $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
           [IO.File]::WriteAllBytes('dist/FlowAndroid-public.cer',$cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-          $signature = Get-AuthenticodeSignature -LiteralPath dist/FlowAndroid-0.1.0-x64.msix
+          $signature = Get-AuthenticodeSignature -LiteralPath dist/FlowAndroid-$env:FLOWANDROID_RELEASE_VERSION-x64.msix
           if (!$signature.SignerCertificate -or $signature.SignerCertificate.Thumbprint -cne $cert.Thumbprint) {
             throw 'Signed package signer does not match the configured PFX.'
           }
@@ -115,7 +123,7 @@ jobs:
       - name: Generate checksum and three-language notes
         shell: pwsh
         run: |
-          $sha = (Get-FileHash dist/FlowAndroid-0.1.0-x64.msix -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sha = (Get-FileHash dist/FlowAndroid-$env:FLOWANDROID_RELEASE_VERSION-x64.msix -Algorithm SHA256).Hash.ToLowerInvariant()
           "$sha  FlowAndroid-$env:FLOWANDROID_RELEASE_VERSION-x64.msix" | Set-Content dist/SHA256SUMS.txt -Encoding utf8
           Copy-Item docs/releases/v0.1.0-preview.zh-CN.md dist/RELEASE.zh-CN.md
           Copy-Item docs/releases/v0.1.0-preview.ja-JP.md dist/RELEASE.ja-JP.md
@@ -145,123 +153,12 @@ jobs:
           $version = $env:FLOWANDROID_RELEASE_VERSION
           $tag = "v$version"
           $pkg = "dist/FlowAndroid-$version-x64.msix"
-          if (!(Test-Path $pkg) -or !(Test-Path dist/SHA256SUMS.txt)) {
-            throw 'Missing update assets; refusing to publish.'
-          }
-          gh release view $tag --json tagName 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            throw "Tag $tag already has a GitHub Release; never silently overwrite an existing update."
-          }
+          if (!(Test-Path $pkg) -or !(Test-Path dist/SHA256SUMS.txt)) { throw 'Missing signed update assets.' }
+          $existing = gh release view $tag --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) { throw "Stable release $tag already exists; refusing replacement." }
           gh release create $tag $pkg dist/SHA256SUMS.txt dist/RELEASE.en-US.md dist/RELEASE.zh-CN.md dist/RELEASE.ja-JP.md `
             --title "FlowAndroid $version" --notes-file docs/releases/v0.1.0-preview.en-US.md --latest --target ${{ github.sha }}
-          if ($LASTEXITCODE -ne 0) { throw 'Stable Release publication failed' }
-      - name: Publish signed hardware-accepted release candidate
-        if: ${{ inputs.sign_package == true && inputs.publish_candidate == true && inputs.hardware_accepted == true }}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v0.1.0-rc.${{ github.run_number }}" dist/* --prerelease --title "FlowAndroid signed RC" --notes-file docs/releases/v0.1.0-preview.en-US.md --target ${{ github.sha }}
-          if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
-) {
-            throw 'release_version must be major.minor.patch'
-          }
-          if ("${{ inputs.publish_stable }}" -eq "true" -and
-              ("${{ inputs.sign_package }}" -ne "true" -or "${{ inputs.hardware_accepted }}" -ne "true")) {
-            throw 'Publishing a stable release requires a signed build and explicit physical hardware acceptance.'
-          }
-      - name: Validate packaging resources
-        shell: pwsh
-        run: ./scripts/Check-MsixPackage.ps1
-      - name: Test
-        run: dotnet test tests/FlowAndroid.Core.Tests/FlowAndroid.Core.Tests.csproj -c Release
-      - name: Prepare signing certificate and identity
-        if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
-        shell: pwsh
-        env:
-          PFX_BASE64: ${{ secrets.FLOWANDROID_PFX_BASE64 || secrets.GH_RELEASE_CERTIFICATE_BASE64 }}
-          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD || secrets.GH_RELEASE_CERTIFICATE_PASSWORD }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if (!$env:PFX_BASE64 -or !$env:PFX_PASSWORD -or !$env:PACKAGE_ID) { throw 'Signing secrets missing: set FLOWANDROID_PFX_BASE64/PASSWORD or the existing GH_RELEASE_CERTIFICATE_BASE64/PASSWORD. Package ID defaults to KiYouJyo.FlowAndroid.' }
-          $path = Join-Path $env:RUNNER_TEMP 'FlowAndroid.pfx'
-          [IO.File]::WriteAllBytes($path,[Convert]::FromBase64String($env:PFX_BASE64))
-          $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($path,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
-          if (!$cert.HasPrivateKey -or $cert.NotAfter -le [DateTime]::UtcNow -or $cert.NotBefore -gt [DateTime]::UtcNow) { throw 'Invalid or expired signing certificate.' }
-          ./scripts/Prepare-MsixIdentity.ps1 -PackageIdentity $env:PACKAGE_ID -PublisherSubject $cert.Subject
-      - name: Stamp monotonic MSIX package version
-        shell: pwsh
-        run: ./scripts/Set-MsixVersion.ps1 -BuildNumber ${{ github.run_number }}
-      - name: Build unsigned package
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $msargs = @('src/FlowAndroid.App/FlowAndroid.App.csproj','/restore','/t:Build','/p:Configuration=Release','/p:Platform=x64','/p:RuntimeIdentifier=win-x64','/p:WindowsPackageType=MSIX','/p:EnableMsixTooling=true','/p:GenerateAppxPackageOnBuild=true','/p:AppxPackageSigningEnabled=false','/p:UapAppxPackageBuildMode=SideloadOnly','/p:AppxBundle=Never',"/p:AppxPackageDir=$env:GITHUB_WORKSPACE\AppPackages\")
-          & msbuild @msargs
-          if ($LASTEXITCODE -ne 0) { throw 'MSIX compilation failed.' }
-          $files = @(Get-ChildItem AppPackages -Recurse -File -Filter 'FlowAndroid.App*.msix' | Where-Object { $_.FullName -notmatch '\\Dependencies\\' })
-          if ($files.Count -ne 1) { throw "Expected one MSIX, found $($files.Count)" }
-          New-Item -ItemType Directory dist -Force | Out-Null
-          Copy-Item $files[0].FullName 'dist/FlowAndroid-0.1.0-x64.msix'
-      - name: Sign and verify MSIX
-        if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
-        shell: pwsh
-        env:
-          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD || secrets.GH_RELEASE_CERTIFICATE_PASSWORD }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $tool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe | Where-Object { $_.FullName -match '\\x64\\signtool.exe$' } | Sort-Object FullName -Descending | Select-Object -First 1
-          if (!$tool) { throw 'Windows SDK SignTool not found.' }
-          $pfx = Join-Path $env:RUNNER_TEMP 'FlowAndroid.pfx'
-          & $tool.FullName sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f $pfx /p $env:PFX_PASSWORD dist/FlowAndroid-0.1.0-x64.msix
-          if ($LASTEXITCODE -ne 0) { throw 'Signing failed.' }
-          $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
-          [IO.File]::WriteAllBytes('dist/FlowAndroid-public.cer',$cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-          $signature = Get-AuthenticodeSignature -LiteralPath dist/FlowAndroid-0.1.0-x64.msix
-          if (!$signature.SignerCertificate -or $signature.SignerCertificate.Thumbprint -cne $cert.Thumbprint) {
-            throw 'Signed package signer does not match the configured PFX.'
-          }
-          if ($signature.Status -in @('HashMismatch','NotSigned','NotSupportedFileFormat')) {
-            throw "MSIX signature is invalid: $($signature.Status)"
-          }
-          if ($signature.Status -eq 'UnknownError' -and
-              $signature.StatusMessage -notmatch '(?i)not trusted|trust provider|untrusted|self-signed|certificate chain') {
-            throw "Unexpected Authenticode verification error: $($signature.StatusMessage)"
-          }
-          if ($signature.Status -notin @('Valid','UnknownError')) {
-            throw "Unacceptable Authenticode status: $($signature.Status)"
-          }
-          # Acceptance signing may use a self-signed publisher certificate.
-          # It still needs explicit trust installation before app installation on clean Windows.
-          "Signing result: $($signature.Status); signer thumbprint: $($cert.Thumbprint)" |
-            Set-Content 'dist/SIGNATURE-STATUS.txt' -Encoding utf8
-          if ($signature.Status -ne 'Valid') {
-            'This acceptance MSIX has a signer that is not publicly trusted by this runner. Import the public .cer into TrustedPeople on a dedicated test PC after checking its thumbprint; do not advertise as publicly trusted.' |
-              Add-Content 'dist/SIGNATURE-STATUS.txt'
-          }
-      - name: Generate checksum and three-language notes
-        shell: pwsh
-        run: |
-          $sha = (Get-FileHash dist/FlowAndroid-0.1.0-x64.msix -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$sha  FlowAndroid-0.1.0-x64.msix" | Set-Content dist/SHA256SUMS.txt -Encoding utf8
-          Copy-Item docs/releases/v0.1.0-preview.zh-CN.md dist/RELEASE.zh-CN.md
-          Copy-Item docs/releases/v0.1.0-preview.ja-JP.md dist/RELEASE.ja-JP.md
-          Copy-Item docs/releases/v0.1.0-preview.en-US.md dist/RELEASE.en-US.md
-          Copy-Item docs/MANUAL_ACCEPTANCE.md dist/MANUAL_ACCEPTANCE.md
-          Copy-Item docs/BEGINNER_GUIDE.md dist/BEGINNER_GUIDE.md
-          Copy-Item docs/WIZARD_ACCEPTANCE.md dist/WIZARD_ACCEPTANCE.md
-          Copy-Item docs/ACCEPTANCE_RECORD_TEMPLATE.md dist/ACCEPTANCE_RECORD_TEMPLATE.md
-          Copy-Item docs/CERTIFICATE_SETUP.md dist/CERTIFICATE_SETUP.md
-          Copy-Item scripts/Install-Acceptance.ps1 dist/Install-Acceptance.ps1
-      - name: Remove secret PFX file
-        if: always()
-        shell: pwsh
-        run: Remove-Item (Join-Path $env:RUNNER_TEMP 'FlowAndroid.pfx') -Force -ErrorAction SilentlyContinue
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FlowAndroid-MSIX-${{ (github.event_name == 'push' || inputs.sign_package == true) && 'signed-acceptance' || 'UNSIGNED-test-only' }}
-          path: dist/*
-          if-no-files-found: error
+          if ($LASTEXITCODE -ne 0) { throw 'Stable release publication failed.' }
       - name: Publish signed hardware-accepted release candidate
         if: ${{ inputs.sign_package == true && inputs.publish_candidate == true && inputs.hardware_accepted == true }}
         shell: pwsh
