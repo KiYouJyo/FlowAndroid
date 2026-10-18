@@ -16,7 +16,8 @@ if (!(Test-Path $msix) -or !(Test-Path $manifest)) {
     throw 'The acceptance package is incomplete (MSIX or SHA256SUMS missing).'
 }
 $line = @(Get-Content $manifest | Where-Object { $_.EndsWith("  $msixName") })
-$pattern = '^([a-fA-F0-9]{64})\s+' + [regex]::Escape($msixName) + '
+$pattern = '^([a-fA-F0-9]{64})\s+' + [regex]::Escape($msixName) + '$'
+if ($line.Count -ne 1 -or $line[0] -notmatch $pattern) {
     throw 'Invalid or ambiguous checksum manifest.'
 }
 $expected = $Matches[1]
