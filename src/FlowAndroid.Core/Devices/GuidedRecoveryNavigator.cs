@@ -26,6 +26,9 @@ public sealed class GuidedRecoveryNavigator
         var d = snapshot!.Devices[0];
         if (d.BatteryPercent < 50 || d.BatteryPercent > 100)
             return new(RecoveryNavigationStatus.Blocked, "Battery must be readable and at least 50%.");
+        if (d.BuildTimestamp <= 0 || ota!.PostTimestamp <= 0 || ota.PostTimestamp < d.BuildTimestamp)
+            return new(RecoveryNavigationStatus.Blocked,
+                "Build date is missing or firmware appears older than the current Android system.");
         // Recheck the exact ADB device binding immediately before rebooting.
         try
         {
