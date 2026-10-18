@@ -186,6 +186,7 @@ public sealed partial class MainWindow : Window
             WizardCandidateCombo.Items.Clear();
             WizardCandidateCombo.IsEnabled = false;
             WizardDownloadButton.IsEnabled = false;
+            WizardChoiceStatus.Text = T("wizardNoDevice");
             RefreshWizardDeviceStatus();
             UpdateDeviceDetails();
             UpdatePreflight();
@@ -210,6 +211,7 @@ public sealed partial class MainWindow : Window
             _package = null;
             _trustedCatalog = null;
             _otaVerified = false;
+            WizardDownloadStatus.Text = T("wizardLocalFile");
             OfficialResult.Text = T("officialPending");
             RecoveryConsent.IsChecked = false;
             UpdateSideloadButton();
@@ -453,7 +455,7 @@ public sealed partial class MainWindow : Window
             UpdateSideloadButton();
             AddLog("Official OTA downloaded and verified: " + selected.FileName);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_downloadCancellation?.IsCancellationRequested == true)
         {
             WizardDownloadStatus.Text = T("wizardCancelled");
         }
