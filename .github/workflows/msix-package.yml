@@ -36,7 +36,7 @@ jobs:
       - name: Test
         run: dotnet test tests/FlowAndroid.Core.Tests/FlowAndroid.Core.Tests.csproj -c Release
       - name: Prepare signing certificate and identity
-        if: ${{ inputs.sign_package == true }}
+        if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
         shell: pwsh
         env:
           PFX_BASE64: ${{ secrets.FLOWANDROID_PFX_BASE64 }}
@@ -64,7 +64,7 @@ jobs:
           New-Item -ItemType Directory dist -Force | Out-Null
           Copy-Item $files[0].FullName 'dist/FlowAndroid-0.1.0-x64.msix'
       - name: Sign and verify MSIX
-        if: ${{ inputs.sign_package == true }}
+        if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
         shell: pwsh
         env:
           PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD }}
@@ -93,7 +93,7 @@ jobs:
         run: Remove-Item (Join-Path $env:RUNNER_TEMP 'FlowAndroid.pfx') -Force -ErrorAction SilentlyContinue
       - uses: actions/upload-artifact@v4
         with:
-          name: FlowAndroid-MSIX-${{ inputs.sign_package == true && 'signed' || 'UNSIGNED-test-only' }}
+          name: FlowAndroid-MSIX-${{ (github.event_name == 'push' || inputs.sign_package == true) && 'signed-acceptance' || 'UNSIGNED-test-only' }}
           path: dist/*
           if-no-files-found: error
       - name: Publish signed hardware-accepted release candidate
