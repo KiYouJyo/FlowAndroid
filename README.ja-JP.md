@@ -8,6 +8,12 @@
 </p>
 <p align="center"><a href="README.md">简体中文</a> | 日本語 | <a href="README.en-US.md">English</a></p>
 
+## Pixel 初心者向け更新ウィザード
+
+USB 接続・端末識別、Google 公式 OTA の安定版候補、SHA-256 検証付きダウンロード、確認付き Recovery 再起動、監督下の Sideload、再起動後のビルド確認まで案内します。地域・キャリアの不明なビルドは自動選択しません。端末なしでも書き込み不可の七段階デモを使用できます。Factory Image は読み取り専用です。
+
+[ガイド](docs/BEGINNER_GUIDE.md)、[テスト項目](docs/WIZARD_ACCEPTANCE.md)。Pixel 実機検証は未完了です。
+
 ## 開発状況
 
 **v0.1.0 は未公開の開発プレビューです。** デバイス診断、Google 公式 SHA-256 の照合、確認付き OTA Sideload の試作を実装しました。OTA 転送はシステムを変更しますが、Pixel 実機検証は未完了のため通常使用を推奨しません。Factory パーティション書き込み、ロック変更、初期化は無効です。

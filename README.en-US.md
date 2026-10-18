@@ -8,6 +8,12 @@
 </p>
 <p align="center"><a href="README.md">简体中文</a> | <a href="README.ja-JP.md">日本語</a> | English</p>
 
+## Beginner-friendly Pixel update wizard
+
+The app now offers a guided path for one authorized Pixel: USB diagnostics, official production full OTA suggestions, checksum-verified download, explicit safe Recovery reboot, supervised Sideload and post-reboot build verification. Multiple regional builds are never guessed. A seven-step device-free tutorial allows previewing the process without creating a fake device or enabling writes. Factory Image is read-only.
+
+See [Beginner guide](docs/BEGINNER_GUIDE.md) and [simulation acceptance matrix](docs/WIZARD_ACCEPTANCE.md). Physical Pixel tests are still required.
+
 ## Status
 
 **v0.1.0 is an unreleased developer preview.** Read-only diagnostics, Google checksum verification and a supervised OTA sideload prototype are implemented. OTA transfer DOES change system software; this path has NOT passed real Pixel acceptance and must not be treated as production-ready. Factory partition flashing, lock/unlock and wiping remain disabled.

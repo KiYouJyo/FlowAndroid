@@ -35,3 +35,15 @@
 - [ ] Real signed MSIX verification once certificate is configured.
 - [ ] Microsoft Store onboarding, identity, policy review and real store submission.
 - [ ] Community ROM adapters; require independent device policies and test coverage.
+
+## Beginner experience (October 2026)
+- [x] Guided UI steps: diagnose USB authorization and Pixel identity; detect insufficient charge; show beginner-friendly solutions.
+- [x] Official OTA production candidate selection with strict codename matching and ambiguous regional variants blocked.
+- [x] Google checksum-verified, cancellable download to an app-local user cache and local ZIP alternative.
+- [x] One explicitly confirmed, serial-bound ADB Recovery reboot with additional preflight gates.
+- [x] Seven-screen offline interactive tutorial without enabling any device writes.
+- [x] Supervised Recovery Sideload, safe progress indicator, exact post-reboot build fingerprint verification.
+- [x] Collapse risky factory-image read-only inspection into advanced options.
+- [x] Unit-tested no-device, multi-device, mismatch, tampered download, ambiguous firmware and Recovery interception scenarios.
+- [ ] Manual UI walkthrough on a clean Windows installation.
+- [ ] Real Pixel hardware USB/Recovery/Sideload tests; carrier/SKU-specific compatibility validation.

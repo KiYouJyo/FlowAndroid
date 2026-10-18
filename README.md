@@ -9,6 +9,17 @@
 </p>
 <p align="center">简体中文 | <a href="README.ja-JP.md">日本語</a> | <a href="README.en-US.md">English</a></p>
 
+## 新手图形向导（已实现实验性流程）
+
+启动应用后打开 **刷机向导**，系统将帮你检查 USB / ADB、识别 Pixel 设备型号与电量、从 Google 官网筛选稳定完整 OTA、下载并核验 SHA-256、引导进入 Recovery、受控 Sideload，并在手机重启后验证实际 Android 构建。
+
+- 自动筛选存在地区/运营商版本歧义时不会擅自选择或下载。
+- 可点击“无手机？查看流程演示”，在无设备情况下逐步查看完整七步操作（绝不执行设备命令）。
+- 一键进入 Recovery 仅在官方固件校验、备份、许可、机型与电量检查通过后允许，需再次确认。
+- Factory Image 的高级工具默认折叠且仅限只读检查。
+
+[新手使用指南](docs/BEGINNER_GUIDE.md) · [无真机测试矩阵](docs/WIZARD_ACCEPTANCE.md) · [实机验收清单](docs/MANUAL_ACCEPTANCE.md)
+
 ## 当前进度
 
 **0.1.0 开发预览阶段，尚未正式发布签名安装包。** 已实现只读设备检测、官方固件校验、人工确认式 OTA Sideload 原型；OTA 是实际系统更新操作，尚未完成 Pixel 真机验收，请勿将 CI 产物用于重要设备。Factory Image 分区刷写、解锁、上锁及擦除仍被禁用。
