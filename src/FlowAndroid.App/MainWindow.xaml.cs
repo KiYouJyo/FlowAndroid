@@ -111,6 +111,8 @@ public sealed partial class MainWindow : Window
         BackupConsent.Content = T("backupConsent");
         TermsConsent.Content = T("termsConsent");
         RecoveryConsent.Content = T("recoveryConsent");
+        EnterRecoveryButton.Content = T("enterRecovery");
+        if (RecoveryStatusText.Text.Length == 0) RecoveryStatusText.Text = T("recoveryHowTo");
         StartSideloadButton.Content = T("sideloadStart");
         VerifyPostInstallButton.Content = T("postInstallButton");
         if (SideloadStatus.Text.Length == 0) SideloadStatus.Text = T("sideloadHint");
@@ -465,6 +467,10 @@ public sealed partial class MainWindow : Window
     private void UpdateSideloadButton()
     {
         if (StartSideloadButton is null) return;
+        EnterRecoveryButton.IsEnabled = _otaVerified && _trustedCatalog is not null &&
+            _snapshot is { HasOneOnlinePixel: true } && _package is not null &&
+            _snapshot.Devices[0].BatteryPercent >= 50 &&
+            BackupConsent.IsChecked == true && TermsConsent.IsChecked == true;
         StartSideloadButton.IsEnabled = _otaVerified && _trustedCatalog is not null &&
             _snapshot is not null && _package is not null &&
             PixelOtaPreflight.Evaluate(_snapshot, _package).IsCompatibleForReview &&
@@ -505,6 +511,46 @@ public sealed partial class MainWindow : Window
         {
             VerifyOfficialButton.IsEnabled = true;
             OfficialProgress.IsActive = false;
+            UpdateSideloadButton();
+        }
+    }
+
+    private async void EnterRecovery_Click(object sender, RoutedEventArgs e)
+    {
+        if (!EnterRecoveryButton.IsEnabled || _snapshot is null || _package is null)
+            return;
+        var consent = new ContentDialog
+        {
+            XamlRoot = (Content as FrameworkElement)!.XamlRoot,
+            Title = T("enterRecoveryTitle"),
+            Content = T("enterRecoveryConfirm"),
+            PrimaryButtonText = T("enterRecoveryProceed"),
+            CloseButtonText = T("confirmCancel"),
+            DefaultButton = ContentDialogButton.Close
+        };
+        if (await consent.ShowAsync() != ContentDialogResult.Primary) return;
+        EnterRecoveryButton.IsEnabled = false;
+        ScanButton.IsEnabled = false;
+        WizardScanButton.IsEnabled = false;
+        RecoveryConsent.IsChecked = false;
+        try
+        {
+            var service = new GuidedRecoveryNavigator(new SystemCommandRunner(), _devices.AdbExecutable);
+            var result = await service.EnterRecoveryAsync(_snapshot, _package,
+                _otaVerified, BackupConsent.IsChecked == true, TermsConsent.IsChecked == true);
+            RecoveryStatusText.Text = result.Status == RecoveryNavigationStatus.Started
+                ? T("recoveryAfterReboot") : T("recoveryFailed") + " " + result.Message;
+            AddLog("Recovery navigation: " + result.Status);
+        }
+        catch (Exception ex)
+        {
+            RecoveryStatusText.Text = T("recoveryFailed") + " " + ex.Message;
+            AddLog("Recovery navigation error: " + ex.Message);
+        }
+        finally
+        {
+            ScanButton.IsEnabled = true;
+            WizardScanButton.IsEnabled = true;
             UpdateSideloadButton();
         }
     }

@@ -12,7 +12,7 @@
 
 ## Explicitly prohibited
 - `fastboot flashing unlock`, `fastboot flashing lock`, `fastboot flash`, `fastboot erase`, `fastboot -w`.
-- `adb reboot recovery`, arbitrary `adb shell`, downloaded `flash-all.bat` or user-supplied shell commands.
+- Arbitrary `adb reboot` or arbitrary `adb shell`, downloaded `flash-all.bat` or user-supplied shell commands. The only permitted Recovery transition is **explicitly confirmed** `adb -s SERIAL reboot recovery` after official OTA hash, backup, battery and one-device identity checks.
 - Factory image updates, downgrades, unofficial ROM installation, arbitrary image/partition choices or silent reboot.
 
 ## Before a production release

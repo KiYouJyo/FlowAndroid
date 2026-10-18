@@ -225,6 +225,10 @@
                                           Checked="OtaConsentChanged" Unchecked="OtaConsentChanged"/>
                                 <CheckBox x:Name="TermsConsent" Content="我已阅读并接受 Google 固件使用条款"
                                           Checked="OtaConsentChanged" Unchecked="OtaConsentChanged"/>
+                                <Button x:Name="EnterRecoveryButton" Content="一键进入 Recovery"
+                                        IsEnabled="False" HorizontalAlignment="Left" Click="EnterRecovery_Click"/>
+                                <TextBlock x:Name="RecoveryStatusText" Text="手机重启到 Recovery 后，如见红色感叹号，请按住电源并点按音量上；随后选择 Apply update from ADB。"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
                                 <CheckBox x:Name="RecoveryConsent" Content="手机已经进入 Apply update from ADB 界面"
                                           Checked="OtaConsentChanged" Unchecked="OtaConsentChanged"/>
                                 <Button x:Name="StartSideloadButton" Content="验证后开始 OTA 传输"
