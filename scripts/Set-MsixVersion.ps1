@@ -1,5 +1,6 @@
 param(
   [Parameter(Mandatory=$true)][int]$BuildNumber,
+  [string]$ProductVersion = '0.1.0',
   [string]$Manifest = 'src/FlowAndroid.App/Package.appxmanifest'
 )
 $ErrorActionPreference = 'Stop'
@@ -20,7 +21,19 @@ foreach ($part in $parts) {
         throw "Invalid MSIX version component."
     }
 }
-$newVersion = '{0}.{1}.{2}.{3}' -f $parts[0],$parts[1],$parts[2],$BuildNumber
+if ($ProductVersion -notmatch '^\d+\.\d+\.\d+
+$identity.SetAttribute('Version',$newVersion)
+$doc.Save((Join-Path (Get-Location) $Manifest))
+Write-Host "MSIX version stamped: $newVersion"
+) { throw 'ProductVersion must be major.minor.patch.' }
+$components = $ProductVersion.Split('.')
+foreach ($component in $components) {
+    $parsed = 0
+    if (-not [int]::TryParse($component, [ref]$parsed) -or $parsed -lt 0 -or $parsed -gt 65535) {
+        throw 'Invalid product-version component.'
+    }
+}
+$newVersion = '{0}.{1}.{2}.{3}' -f $components[0],$components[1],$components[2],$BuildNumber
 $identity.SetAttribute('Version',$newVersion)
 $doc.Save((Join-Path (Get-Location) $Manifest))
 Write-Host "MSIX version stamped: $newVersion"
