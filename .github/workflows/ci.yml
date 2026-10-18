@@ -36,6 +36,9 @@ jobs:
       - name: Check localization key parity
         shell: pwsh
         run: ./scripts/Test-Localization.ps1
+      - name: Validate native bottom navigation and settings
+        shell: pwsh
+        run: ./scripts/Test-NavigationLayout.ps1
       - name: Restore application
         run: dotnet restore src/FlowAndroid.App/FlowAndroid.App.csproj -p:Platform=x64
       - name: Build WinUI 3 shell

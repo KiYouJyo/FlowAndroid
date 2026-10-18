@@ -69,3 +69,7 @@ dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x
 ### 应用内自动更新
 
 在**关于 → 应用更新**点击“检查更新”。GitHub 签名版支持下载更新、SHA-256 与 MSIX 签名校验后“重启并更新”；Microsoft Store 版直接通过商店 API 在应用内下载安装。两者严格区分发布渠道，且 OTA 刷机过程中不会替换应用。只有正式稳定 Release 才会触发 GitHub 更新，验收包不会自动升级。[实现与测试说明](docs/IN_APP_UPDATES.md)。
+
+### 导航与设置
+
+“设备、更新向导、诊断日志”保持在主导航；“关于、设置”固定在最底部。**语言切换已经从汉堡菜单移到独立的设置页**，并加入系统／浅色／深色主题选择，三语及主题偏好可即时切换、重新打开后保持。[设置与导航设计](docs/SETTINGS_AND_NAVIGATION.md)。
