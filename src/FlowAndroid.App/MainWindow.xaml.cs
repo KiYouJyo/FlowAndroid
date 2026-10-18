@@ -26,6 +26,7 @@ public sealed partial class MainWindow : Window
     private string? _postInstallSerial;
     private readonly StringBuilder _history = new();
     private string _language = "zh-CN";
+    private int _demoStep = -1;
 
     public MainWindow()
     {
@@ -66,7 +67,8 @@ public sealed partial class MainWindow : Window
         WizardStep1Title.Text = T("wizardStep1");
         WizardStep1Help.Text = T("wizardStep1Help");
         WizardScanButton.Content = T("wizardScan");
-        WizardDemoButton.Content = T("wizardDemo");
+        WizardDemoButton.Content = T(_demoStep < 0 ? "wizardDemo" : "wizardDemoNext");
+        if (_demoStep >= 0) WizardDemoText.Text = T("wizardDemo" + _demoStep);
         WizardStep2Title.Text = T("wizardStep2");
         WizardStep2Help.Text = T("wizardStep2Help");
         WizardFindButton.Content = T("wizardFind");
@@ -116,6 +118,7 @@ public sealed partial class MainWindow : Window
         StartSideloadButton.Content = T("sideloadStart");
         VerifyPostInstallButton.Content = T("postInstallButton");
         if (SideloadStatus.Text.Length == 0) SideloadStatus.Text = T("sideloadHint");
+        AdvancedFactoryExpander.Header = T("wizardAdvanced");
         FactoryTitle.Text = T("factoryTitle");
         FactoryWarning.Text = T("factoryWarning");
         PickFactoryButton.Content = T("factoryPick");
@@ -303,11 +306,12 @@ public sealed partial class MainWindow : Window
 
     private void WizardDemo_Click(object sender, RoutedEventArgs e)
     {
-        WizardDemoText.Visibility = WizardDemoText.Visibility == Visibility.Visible
-            ? Visibility.Collapsed : Visibility.Visible;
-        WizardDemoText.Text = T("wizardDemoSteps");
-        // Never create fake ADB state or populate trust/catalog fields in demo mode.
-        AddLog("Tutorial preview opened (no device commands or writes).");
+        // Demo is presentation-only. Never set a fake device, package, or write approval.
+        _demoStep = (_demoStep + 1) % 7;
+        WizardDemoText.Visibility = Visibility.Visible;
+        WizardDemoText.Text = T("wizardDemo" + _demoStep);
+        WizardDemoButton.Content = T("wizardDemoNext");
+        AddLog("Tutorial step " + (_demoStep + 1) + " displayed (no ADB command).");
     }
 
     private async void WizardFind_Click(object sender, RoutedEventArgs e)

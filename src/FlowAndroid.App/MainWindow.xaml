@@ -243,6 +243,8 @@
                             </StackPanel>
                         </Border>
 
+                        <Expander x:Name="AdvancedFactoryExpander"
+                                  Header="高级工具（仅做检查）" IsExpanded="False">
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="12" Padding="24">
@@ -259,6 +261,7 @@
                                     NavigateUri="https://developers.google.com/android/images"/>
                             </StackPanel>
                         </Border>
+                        </Expander>
                     </StackPanel>
                 </ScrollViewer>
 
