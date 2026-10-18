@@ -85,7 +85,9 @@ public sealed partial class MainWindow : Window
                 _preferences = _preferences with { Language = language };
                 PreferencesStore.Save(_preferences);
             }
-            if (HomeTitle is not null)
+            // During InitializeComponent the ComboBox may fire before other pages exist.
+            // Only refresh complete UI after preferences and visual tree are ready.
+            if (_preferencesReady)
                 ApplyLanguage();
         }
     }
@@ -101,9 +103,8 @@ public sealed partial class MainWindow : Window
     {
         if (ThemeSelector?.SelectedItem is not ComboBoxItem item || item.Tag is not string theme)
             return;
-        if (Navigation is not null)
-            Navigation.RequestedTheme = ResolveTheme(theme);
-        if (!_preferencesReady) return;
+        if (!_preferencesReady) return; // Initialized in the constructor after XAML load.
+        Navigation.RequestedTheme = ResolveTheme(theme);
         _preferences = _preferences with { Theme = theme };
         PreferencesStore.Save(_preferences);
     }
