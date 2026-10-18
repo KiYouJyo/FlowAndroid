@@ -283,18 +283,14 @@ public sealed partial class MainWindow : Window
     private void RefreshWizardDeviceStatus()
     {
         if (WizardDeviceStatus is null) return;
-        if (_snapshot is { HasOneOnlinePixel: true } && _snapshot.Devices.Count == 1)
+        var status = DeviceGuidanceEngine.Diagnose(_snapshot);
+        WizardFindButton.IsEnabled = status.CanSearchFirmware;
+        WizardDeviceStatus.Text = T("tip" + status.Problem);
+        if (status.CanSearchFirmware && _snapshot!.Devices.Count == 1)
         {
             var d = _snapshot.Devices[0];
             WizardDeviceStatus.Text = T("wizardDeviceReady") + ": " + d.Model + " (" + d.Codename + "), " +
-                T("battery") + ": " + (d.BatteryPercent < 0 ? "—" : d.BatteryPercent + "%");
-            WizardFindButton.IsEnabled = true;
-        }
-        else
-        {
-            WizardDeviceStatus.Text = _snapshot?.Devices.Count > 1
-                ? T("wizardMultipleDevices") : T("wizardNoDevice");
-            WizardFindButton.IsEnabled = false;
+                T("battery") + ": " + d.BatteryPercent + "%";
         }
     }
 
@@ -367,7 +363,7 @@ public sealed partial class MainWindow : Window
         }
         finally
         {
-            WizardFindButton.IsEnabled = _snapshot?.HasOneOnlinePixel == true;
+            WizardFindButton.IsEnabled = DeviceGuidanceEngine.Diagnose(_snapshot).CanSearchFirmware;
             WizardFindProgress.IsActive = false;
             RefreshWizardDownloadEligibility();
         }
@@ -386,7 +382,7 @@ public sealed partial class MainWindow : Window
             _wizardChoice?.Status == GuideChoiceStatus.ReadyToDownload &&
             _wizardChoice.Suggested is not null && _wizardSelected is not null &&
             string.Equals(_wizardSelected.FileName, _wizardChoice.Suggested.FileName, StringComparison.Ordinal) &&
-            _snapshot is { HasOneOnlinePixel: true } &&
+            DeviceGuidanceEngine.Diagnose(_snapshot).CanSearchFirmware &&
             _wizardSelected.Codename.Equals(_snapshot.Devices[0].Codename, StringComparison.OrdinalIgnoreCase);
     }
 
