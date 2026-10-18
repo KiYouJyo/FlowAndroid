@@ -39,7 +39,7 @@ public sealed class StorePackageUpdater
             var fraction = x.TotalDownloadProgress;
             progress?.Report(fraction is >= 0 and <= 1 ? fraction : null);
         });
-        var result = await operation.AsTask(null, storeProgress);
+        var result = await operation.AsTask(CancellationToken.None, storeProgress);
         return result.OverallState == StorePackageUpdateState.Completed;
     }
 }
