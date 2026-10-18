@@ -47,3 +47,14 @@
 - [x] Unit-tested no-device, multi-device, mismatch, tampered download, ambiguous firmware and Recovery interception scenarios.
 - [ ] Manual UI walkthrough on a clean Windows installation.
 - [ ] Real Pixel hardware USB/Recovery/Sideload tests; carrier/SKU-specific compatibility validation.
+
+## App self-update
+- [x] About page native WinUI 3 GitHub/Store update controls and trilingual status/release notes.
+- [x] GitHub latest stable release check, version-aware signed MSIX asset selection and SHA256SUMS verification.
+- [x] Windows WinVerifyTrust signed-package validation, same MSIX name/publisher and strictly newer package-version checks.
+- [x] Restart Manager + ForceApplicationShutdown package update handoff; block app replacement during Pixel OTA transfer.
+- [x] Compile-time dedicated Microsoft Store channel using StoreContext download/install APIs.
+- [x] Manual, physical-acceptance-gated stable publishing path with semantic versioned MSIX assets.
+- [x] Offline core unit tests for malformed/old/prerelease/malicious release and bad checksums.
+- [ ] Test in-place update from one signed MSIX to another on a real Windows desktop.
+- [ ] Submit/approve the Microsoft Store build in Partner Center and exercise live Store updates.

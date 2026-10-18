@@ -33,3 +33,7 @@ The single-project MSIX CI workflow is [msix-package.yml](../.github/workflows/m
 ### Versioning
 
 Both GitHub MSIX candidates and Store upload candidates replace the fourth field of the package version with their workflow run number (starting from 0.1.0.0), to avoid same-version update collisions. The version-stamping helper validates the MSIX 16-bit field limit. The GitHub and Store channels must retain intentionally distinct package identities and version sequences when configured.
+
+### Native update distribution
+
+In-app updating requires a genuine **stable** signed GitHub Release (not an Actions artifact or release candidate). The signed MSIX name must be `FlowAndroid-<major>.<minor>.<patch>-x64.msix` and accompanied by `SHA256SUMS.txt`. GitHub publication is gated by manual `publish_stable=true`, `sign_package=true`, `hardware_accepted=true` and a three-part `release_version`; the workflow never silently overwrites a release. A separate compile-flagged Store version uses native `StoreContext` for in-app update. Read [IN_APP_UPDATES.md](IN_APP_UPDATES.md).

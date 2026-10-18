@@ -65,3 +65,7 @@ dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x
 本地优先，不上传设备信息。反馈问题前请从日志中移除序列号与本机路径。见 [PRIVACY](PRIVACY.md)、[SECURITY](SECURITY.md)、[CONTRIBUTING](CONTRIBUTING.md)。采用 [MIT License](LICENSE)。
 
 © 2026 KiYouJyo
+
+### 应用内自动更新
+
+在**关于 → 应用更新**点击“检查更新”。GitHub 签名版支持下载更新、SHA-256 与 MSIX 签名校验后“重启并更新”；Microsoft Store 版直接通过商店 API 在应用内下载安装。两者严格区分发布渠道，且 OTA 刷机过程中不会替换应用。只有正式稳定 Release 才会触发 GitHub 更新，验收包不会自动升级。[实现与测试说明](docs/IN_APP_UPDATES.md)。

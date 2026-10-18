@@ -46,3 +46,7 @@ dotnet build src/FlowAndroid.App/FlowAndroid.App.csproj -c Release -p:Platform=x
 `src/FlowAndroid.App` は UI、`src/FlowAndroid.Core` は検出と安全検査、`tests` は単体テストです。[アーキテクチャ](docs/ARCHITECTURE.md)、[ロードマップ](docs/ROADMAP.md)、[安全ポリシー](docs/FLASH_SAFETY.md)、[リリース手順](docs/RELEASE.md) を参照してください。
 
 v0.2 相当の OTA 検証・転送コードはありますが実機試験が未完了です。Factory Image は検査のみ可能で、実際のパーティション書き込みは禁止しています。未署名の開発用 GitHub プレリリースは手動実行できます。署名済み MSIX と Store 公開には証明書・製品 ID と追加検証が必要です。プライバシーについては [PRIVACY](PRIVACY.md)、[SECURITY](SECURITY.md)、[CONTRIBUTING](CONTRIBUTING.md) を参照。[MIT ライセンス](LICENSE)。© 2026 KiYouJyo。
+
+### アプリ内更新
+
+「情報」→「アプリ更新」から GitHub の正式リリースを確認、SHA-256 と MSIX 署名・発行者の検証後、「再起動して更新」を実行できます。Store 版は Store API を用います。端末 OTA 転送中のアプリ更新は禁止します。[詳しくはこちら](docs/IN_APP_UPDATES.md)。

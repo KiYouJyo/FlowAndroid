@@ -48,3 +48,7 @@ Run the generated executable with the matching Windows App SDK Runtime installed
 The v0.2 checksum-verified OTA workflow is implemented but needs real-device acceptance and failure-mode testing. Factory ZIP inspection exists, while destructive fastboot operations remain blocked. An opt-in unsigned GitHub diagnostic prerelease workflow is available; signed MSIX and Store shipping require certificate and identity provisioning.
 
 Local-first privacy. Redact serials and paths before sharing logs. Read [PRIVACY](PRIVACY.md), [SECURITY](SECURITY.md), [CONTRIBUTING](CONTRIBUTING.md). [MIT](LICENSE). © 2026 KiYouJyo.
+
+### In-app updates
+
+About → App updates supports GitHub stable Release download, SHA-256 and MSIX signer/identity verification, and Windows-managed restart and update. Microsoft Store builds update in-app through native Store APIs. Channels never cross and app installation is blocked during Pixel OTA transfer. See [updater specification](docs/IN_APP_UPDATES.md).
