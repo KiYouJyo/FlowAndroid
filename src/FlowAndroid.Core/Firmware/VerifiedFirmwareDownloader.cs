@@ -23,7 +23,7 @@ public sealed class VerifiedFirmwareDownloader
     {
         if (image.Type != GoogleImageType.Ota || !GuidedFirmwarePlanner.IsGoogleDownload(image.DownloadUrl))
             throw new InvalidDataException("Only official Google OTA download links are supported.");
-        if (!Convert.TryFromHexString(image.Sha256, new byte[32], out var written) || written != 32)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(image.Sha256, "^[0-9a-fA-F]{64}$"))
             throw new InvalidDataException("Official SHA-256 is malformed.");
         if (!System.Text.RegularExpressions.Regex.IsMatch(image.FileName, @"^[a-zA-Z0-9._-]+\.zip$") ||
             !string.Equals(Path.GetFileName(image.DownloadUrl.AbsolutePath), image.FileName, StringComparison.Ordinal))
@@ -73,6 +73,7 @@ public sealed class VerifiedFirmwareDownloader
             var actual = sha.GetHashAndReset();
             if (!CryptographicOperations.FixedTimeEquals(actual, Convert.FromHexString(image.Sha256)))
                 throw new InvalidDataException("Downloaded ZIP hash does not match Google's published SHA-256.");
+            await output.DisposeAsync().ConfigureAwait(false);
             File.Move(temporary, destination, overwrite: false);
             progress?.Report(new(total, total));
             return destination;
