@@ -284,6 +284,34 @@
                         <TextBlock x:Name="AboutVersion" Text="0.1.0 · Diagnostic preview" Opacity="0.75"/>
                         <TextBlock x:Name="AboutDescription" Text="面向 Pixel 的 Windows 原生 Android 维护工具。"
                                    TextWrapping="Wrap"/>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="20">
+                            <StackPanel Spacing="12">
+                                <TextBlock x:Name="UpdateHeader" Text="应用更新"
+                                           FontSize="20" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="UpdateVersion" Text="当前版本 0.1.0"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock x:Name="UpdateChannel" Text="更新来源：GitHub Releases"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button x:Name="CheckUpdateButton" Content="检查更新" Click="CheckUpdate_Click"/>
+                                    <Button x:Name="DownloadUpdateButton" Content="下载并验证" Visibility="Collapsed"
+                                            Click="DownloadUpdate_Click"/>
+                                    <Button x:Name="ApplyUpdateButton" Content="重启并更新" Visibility="Collapsed"
+                                            Click="ApplyUpdate_Click" Style="{StaticResource AccentButtonStyle}"/>
+                                    <ProgressRing x:Name="UpdateBusy" Height="24" Width="24" IsActive="False"/>
+                                </StackPanel>
+                                <ProgressBar x:Name="UpdateProgress" Height="4" Visibility="Collapsed"
+                                             Minimum="0" Maximum="100" Value="0"/>
+                                <TextBlock x:Name="UpdateStatus" Text="尚未检查更新"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock x:Name="UpdateNotesTitle" Text="更新说明"
+                                           FontWeight="SemiBold" Visibility="Collapsed"/>
+                                <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Height="100" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Border>
                         <HyperlinkButton Content="GitHub · KiYouJyo/FlowAndroid"
                                          NavigateUri="https://github.com/KiYouJyo/FlowAndroid"/>
                         <TextBlock Text="© 2026 KiYouJyo · MIT" Opacity="0.6"/>

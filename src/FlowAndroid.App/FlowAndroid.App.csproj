@@ -12,6 +12,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <Version>0.1.0</Version>
+    <DefineConstants Condition="'$(FlowAndroidStoreBuild)' == 'true'">$(DefineConstants);FLOWANDROID_STORE</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>

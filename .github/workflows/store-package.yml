@@ -30,7 +30,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           dotnet test tests/FlowAndroid.Core.Tests/FlowAndroid.Core.Tests.csproj -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Unit tests failed.' }
-          $args = @('src/FlowAndroid.App/FlowAndroid.App.csproj','/restore','/t:Build','/p:Configuration=Release','/p:Platform=x64','/p:WindowsPackageType=MSIX','/p:EnableMsixTooling=true','/p:GenerateAppxPackageOnBuild=true','/p:AppxPackageSigningEnabled=false','/p:UapAppxPackageBuildMode=StoreUpload','/p:AppxBundle=Never',"/p:AppxPackageDir=$env:GITHUB_WORKSPACE\AppPackages\")
+          $args = @('src/FlowAndroid.App/FlowAndroid.App.csproj','/restore','/t:Build','/p:Configuration=Release','/p:Platform=x64','/p:FlowAndroidStoreBuild=true','/p:WindowsPackageType=MSIX','/p:EnableMsixTooling=true','/p:GenerateAppxPackageOnBuild=true','/p:AppxPackageSigningEnabled=false','/p:UapAppxPackageBuildMode=StoreUpload','/p:AppxBundle=Never',"/p:AppxPackageDir=$env:GITHUB_WORKSPACE\AppPackages\")
           & msbuild @args
           if ($LASTEXITCODE -ne 0) { throw 'Store MSIX compilation failed.' }
           $apps = @(Get-ChildItem AppPackages -Recurse -File -Filter 'FlowAndroid.App*.msix' | Where-Object { $_.FullName -notmatch '\\Dependencies\\' })

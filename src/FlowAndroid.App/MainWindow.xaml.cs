@@ -4,6 +4,9 @@ using FlowAndroid.Core.Firmware;
 using FlowAndroid.Core.Process;
 using FlowAndroid.Core.Safety;
 using FlowAndroid.Localization;
+using FlowAndroid.Core.Updates;
+using FlowAndroid.Updates;
+using Microsoft.Windows.AppLifecycle;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
@@ -27,6 +30,14 @@ public sealed partial class MainWindow : Window
     private readonly StringBuilder _history = new();
     private string _language = "zh-CN";
     private int _demoStep = -1;
+    private readonly GitHubReleaseClient _githubUpdater = new(new HttpClient
+    {
+        Timeout = TimeSpan.FromMinutes(10)
+    });
+    private UpdateRelease? _availableUpdate;
+    private string? _downloadedMsix;
+    private StorePackageUpdater? _storeUpdater;
+    private bool _updateOperationActive;
 
     public MainWindow()
     {
@@ -103,6 +114,17 @@ public sealed partial class MainWindow : Window
         LogsDescription.Text = T("logsDesc");
         ClearLogsButton.Content = T("clear");
         AboutDescription.Text = T("aboutDesc");
+        UpdateHeader.Text = T("updateHeader");
+        CheckUpdateButton.Content = T("updateCheck");
+        DownloadUpdateButton.Content = T("updateDownload");
+        ApplyUpdateButton.Content = T("updateApply");
+        UpdateNotesTitle.Text = T("updateNotesTitle");
+        UpdateVersion.Text = T("updateInstalled") + ": " + WindowsPackageUpdater.DisplayVersion;
+#if FLOWANDROID_STORE
+        UpdateChannel.Text = T("updateChannel") + ": Microsoft Store";
+#else
+        UpdateChannel.Text = T("updateChannel") + ": GitHub Releases";
+#endif
 
         OfficialTitle.Text = T("officialTitle");
         OfficialHint.Text = T("officialHint");
@@ -696,6 +718,182 @@ public sealed partial class MainWindow : Window
             AddLog("Factory inspection error: " + ex.Message);
         }
         finally { PickFactoryButton.IsEnabled = true; }
+    }
+
+
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateOperationActive) return;
+        _updateOperationActive = true;
+        CheckUpdateButton.IsEnabled = false;
+        DownloadUpdateButton.Visibility = Visibility.Collapsed;
+        ApplyUpdateButton.Visibility = Visibility.Collapsed;
+        UpdateNotes.Visibility = Visibility.Collapsed;
+        UpdateNotesTitle.Visibility = Visibility.Collapsed;
+        _availableUpdate = null;
+        _downloadedMsix = null;
+        UpdateBusy.IsActive = true;
+        UpdateProgress.Visibility = Visibility.Collapsed;
+        UpdateStatus.Text = T("updateChecking");
+        try
+        {
+            if (!WindowsPackageUpdater.IsPackaged)
+            {
+                UpdateStatus.Text = T("updateDev");
+                return;
+            }
+#if FLOWANDROID_STORE
+            _storeUpdater ??= new StorePackageUpdater(WinRT.Interop.WindowNative.GetWindowHandle(this));
+            var (available, version) = await _storeUpdater.CheckAsync();
+            UpdateStatus.Text = available
+                ? T("updateAvailable") + (version is null ? "" : " " + version)
+                : T("updateLatest");
+            DownloadUpdateButton.Content = T("updateStoreInstall");
+            DownloadUpdateButton.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+#else
+            var checkedRelease = await _githubUpdater.CheckAsync(WindowsPackageUpdater.InstalledVersion);
+            switch (checkedRelease.State)
+            {
+                case ReleaseCheckState.UpdateAvailable:
+                    _availableUpdate = checkedRelease.Update;
+                    UpdateStatus.Text = T("updateAvailable") + " " + _availableUpdate!.Version;
+                    UpdateNotes.Text = _availableUpdate.Notes;
+                    UpdateNotes.Visibility = Visibility.Visible;
+                    UpdateNotesTitle.Visibility = Visibility.Visible;
+                    DownloadUpdateButton.Visibility = Visibility.Visible;
+                    break;
+                case ReleaseCheckState.UpToDate:
+                    UpdateStatus.Text = T("updateLatest");
+                    break;
+                case ReleaseCheckState.NoPublishedRelease:
+                    UpdateStatus.Text = T("updateNoRelease");
+                    break;
+                default:
+                    UpdateStatus.Text = T("updateInvalidRelease") + " " + checkedRelease.Detail;
+                    break;
+            }
+#endif
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus.Text = T("updateError") + " " + ex.Message;
+            AddLog("Update check failed: " + ex.GetType().Name);
+        }
+        finally
+        {
+            _updateOperationActive = false;
+            CheckUpdateButton.IsEnabled = true;
+            UpdateBusy.IsActive = false;
+        }
+    }
+
+    private async void DownloadUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateOperationActive) return;
+        _updateOperationActive = true;
+        CheckUpdateButton.IsEnabled = false;
+        DownloadUpdateButton.IsEnabled = false;
+        UpdateBusy.IsActive = true;
+        UpdateProgress.Value = 0;
+        UpdateProgress.Visibility = Visibility.Visible;
+        UpdateProgress.IsIndeterminate = true;
+        UpdateStatus.Text = T("updateDownloading");
+        try
+        {
+#if FLOWANDROID_STORE
+            if (_storeUpdater is null) throw new InvalidOperationException("Check Microsoft Store updates first.");
+            var progress = new Progress<double?>(x =>
+            {
+                if (x is double value)
+                {
+                    UpdateProgress.IsIndeterminate = false;
+                    UpdateProgress.Value = Math.Clamp(value * 100, 0, 100);
+                }
+            });
+            var completed = await _storeUpdater.DownloadAndInstallAsync(progress);
+            if (!completed) throw new InvalidOperationException("Microsoft Store did not complete the update.");
+            UpdateStatus.Text = T("updateRestarting");
+            AppInstance.Restart("");
+#else
+            if (_availableUpdate is null) throw new InvalidOperationException("Check for an available signed update first.");
+            var progress = new Progress<UpdateDownloadProgress>(x =>
+            {
+                if (x.TotalBytes is > 0)
+                {
+                    UpdateProgress.IsIndeterminate = false;
+                    UpdateProgress.Value = Math.Clamp(x.BytesReceived * 100.0 / x.TotalBytes.Value, 0, 100);
+                }
+            });
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "FlowAndroid", "Updates");
+            var path = await _githubUpdater.DownloadVerifiedAsync(_availableUpdate, folder, progress);
+            UpdateStatus.Text = T("updateVerifying");
+            // Never offer installation on SHA256 alone: verify genuine Windows signature,
+            // matching installed MSIX identity/publisher and a newer package version.
+            WindowsPackageUpdater.VerifyUpdatePackage(path);
+            _downloadedMsix = path;
+            UpdateProgress.IsIndeterminate = false;
+            UpdateProgress.Value = 100;
+            UpdateStatus.Text = T("updateReady");
+            ApplyUpdateButton.Visibility = Visibility.Visible;
+            DownloadUpdateButton.Visibility = Visibility.Collapsed;
+#endif
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus.Text = T("updateError") + " " + ex.Message;
+            AddLog("Update download/verification failed: " + ex.GetType().Name);
+        }
+        finally
+        {
+            _updateOperationActive = false;
+            CheckUpdateButton.IsEnabled = true;
+            DownloadUpdateButton.IsEnabled = true;
+            UpdateBusy.IsActive = false;
+            UpdateProgress.IsIndeterminate = false;
+        }
+    }
+
+    private async void ApplyUpdate_Click(object sender, RoutedEventArgs e)
+    {
+#if FLOWANDROID_STORE
+        return; // Store owns installation and channel restarts.
+#else
+        if (_updateOperationActive || _downloadedMsix is null) return;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = (Content as FrameworkElement)!.XamlRoot,
+            Title = T("updateConfirmTitle"),
+            Content = T("updateConfirm"),
+            PrimaryButtonText = T("updateApply"),
+            CloseButtonText = T("confirmCancel"),
+            DefaultButton = ContentDialogButton.Close
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        _updateOperationActive = true;
+        CheckUpdateButton.IsEnabled = false;
+        ApplyUpdateButton.IsEnabled = false;
+        UpdateBusy.IsActive = true;
+        UpdateStatus.Text = T("updateInstalling");
+        try
+        {
+            // Windows may forcibly terminate the running instance here.
+            await WindowsPackageUpdater.InstallAndRestartAsync(_downloadedMsix);
+            UpdateStatus.Text = T("updateRestarting");
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus.Text = T("updateError") + " " + ex.Message;
+            AddLog("Windows package deployment failed: " + ex.GetType().Name);
+        }
+        finally
+        {
+            _updateOperationActive = false;
+            CheckUpdateButton.IsEnabled = true;
+            ApplyUpdateButton.IsEnabled = true;
+            UpdateBusy.IsActive = false;
+        }
+#endif
     }
 
     private void AddLog(string message)
