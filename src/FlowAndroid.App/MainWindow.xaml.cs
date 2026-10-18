@@ -38,6 +38,7 @@ public sealed partial class MainWindow : Window
     private string? _downloadedMsix;
     private StorePackageUpdater? _storeUpdater;
     private bool _updateOperationActive;
+    private bool _otaOperationActive;
 
     public MainWindow()
     {
@@ -612,6 +613,10 @@ public sealed partial class MainWindow : Window
         };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
 
+        _otaOperationActive = true;
+        CheckUpdateButton.IsEnabled = false;
+        DownloadUpdateButton.IsEnabled = false;
+        ApplyUpdateButton.IsEnabled = false;
         StartSideloadButton.IsEnabled = false;
         ScanButton.IsEnabled = false;
         PickPackageButton.IsEnabled = false;
@@ -649,6 +654,10 @@ public sealed partial class MainWindow : Window
             PickPackageButton.IsEnabled = true;
             VerifyOfficialButton.IsEnabled = true;
             SideloadActivity.IsActive = false;
+            _otaOperationActive = false;
+            CheckUpdateButton.IsEnabled = true;
+            DownloadUpdateButton.IsEnabled = true;
+            ApplyUpdateButton.IsEnabled = true;
             // Never permit a second write using a stale approval or possibly changed device state.
             _otaVerified = false;
             _trustedCatalog = null;
@@ -789,7 +798,11 @@ public sealed partial class MainWindow : Window
 
     private async void DownloadUpdate_Click(object sender, RoutedEventArgs e)
     {
-        if (_updateOperationActive) return;
+        if (_updateOperationActive || _otaOperationActive)
+        {
+            UpdateStatus.Text = T("updateBusyOta");
+            return;
+        }
         _updateOperationActive = true;
         CheckUpdateButton.IsEnabled = false;
         DownloadUpdateButton.IsEnabled = false;
@@ -859,7 +872,11 @@ public sealed partial class MainWindow : Window
 #if FLOWANDROID_STORE
         return; // Store owns installation and channel restarts.
 #else
-        if (_updateOperationActive || _downloadedMsix is null) return;
+        if (_updateOperationActive || _otaOperationActive || _downloadedMsix is null)
+        {
+            if (_otaOperationActive) UpdateStatus.Text = T("updateBusyOta");
+            return;
+        }
         var dialog = new ContentDialog
         {
             XamlRoot = (Content as FrameworkElement)!.XamlRoot,
