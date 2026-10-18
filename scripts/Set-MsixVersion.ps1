@@ -21,11 +21,7 @@ foreach ($part in $parts) {
         throw "Invalid MSIX version component."
     }
 }
-if ($ProductVersion -notmatch '^\d+\.\d+\.\d+
-$identity.SetAttribute('Version',$newVersion)
-$doc.Save((Join-Path (Get-Location) $Manifest))
-Write-Host "MSIX version stamped: $newVersion"
-) { throw 'ProductVersion must be major.minor.patch.' }
+if ($ProductVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'ProductVersion must be major.minor.patch.' }
 $components = $ProductVersion.Split('.')
 foreach ($component in $components) {
     $parsed = 0
