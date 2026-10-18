@@ -6,6 +6,7 @@ using FlowAndroid.Core.Safety;
 using FlowAndroid.Localization;
 using FlowAndroid.Core.Updates;
 using FlowAndroid.Updates;
+using FlowAndroid.Core.Settings;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -30,6 +31,8 @@ public sealed partial class MainWindow : Window
     private readonly StringBuilder _history = new();
     private string _language = "zh-CN";
     private int _demoStep = -1;
+    private UserPreferences _preferences = UserPreferences.Default;
+    private bool _preferencesReady;
     private readonly GitHubReleaseClient _githubUpdater = new(new HttpClient
     {
         Timeout = TimeSpan.FromMinutes(10)
@@ -43,6 +46,22 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _preferences = PreferencesStore.Load();
+        _language = _preferences.Language;
+        LanguageSelector.SelectedIndex = _language switch
+        {
+            "ja-JP" => 1,
+            "en-US" => 2,
+            _ => 0
+        };
+        ThemeSelector.SelectedIndex = _preferences.Theme switch
+        {
+            "light" => 1,
+            "dark" => 2,
+            _ => 0
+        };
+        Navigation.RequestedTheme = ResolveTheme(_preferences.Theme);
+        _preferencesReady = true;
         Title = "FlowAndroid";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(DragRegion);
@@ -61,9 +80,32 @@ public sealed partial class MainWindow : Window
         if (LanguageSelector?.SelectedItem is ComboBoxItem item && item.Tag is string language)
         {
             _language = language;
+            if (_preferencesReady)
+            {
+                _preferences = _preferences with { Language = language };
+                PreferencesStore.Save(_preferences);
+            }
             if (HomeTitle is not null)
                 ApplyLanguage();
         }
+    }
+
+    private static ElementTheme ResolveTheme(string theme) => theme switch
+    {
+        "light" => ElementTheme.Light,
+        "dark" => ElementTheme.Dark,
+        _ => ElementTheme.Default
+    };
+
+    private void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ThemeSelector?.SelectedItem is not ComboBoxItem item || item.Tag is not string theme)
+            return;
+        if (Navigation is not null)
+            Navigation.RequestedTheme = ResolveTheme(theme);
+        if (!_preferencesReady) return;
+        _preferences = _preferences with { Theme = theme };
+        PreferencesStore.Save(_preferences);
     }
 
     private void ApplyLanguage()
@@ -72,6 +114,19 @@ public sealed partial class MainWindow : Window
         FirmwareNav.Content = T("guideLabel");
         LogsNav.Content = T("logs");
         AboutNav.Content = T("about");
+        if (Navigation.SettingsItem is NavigationViewItem settingsItem)
+            settingsItem.Content = T("settings");
+        SettingsTitle.Text = T("settings");
+        SettingsDescription.Text = T("settingsDescription");
+        LanguageHint.Text = T("languageHint");
+        AppearanceCaption.Text = T("appearance");
+        AppearanceHint.Text = T("appearanceHint");
+        if (ThemeSelector.Items.Count == 3)
+        {
+            ((ComboBoxItem)ThemeSelector.Items[0]).Content = T("themeSystem");
+            ((ComboBoxItem)ThemeSelector.Items[1]).Content = T("themeLight");
+            ((ComboBoxItem)ThemeSelector.Items[2]).Content = T("themeDark");
+        }
         LanguageCaption.Text = T("language");
         HomeTitle.Text = T("homeTitle");
         WizardInfo.Title = T("wizardInfoTitle");
@@ -157,11 +212,13 @@ public sealed partial class MainWindow : Window
     {
         if (HomePanel is null)
             return;
-        var tag = (args.SelectedItem as NavigationViewItem)?.Tag?.ToString() ?? "home";
+        var tag = args.IsSettingsSelected ? "settings" :
+            (args.SelectedItem as NavigationViewItem)?.Tag?.ToString() ?? "home";
         HomePanel.Visibility = tag == "home" ? Visibility.Visible : Visibility.Collapsed;
         FirmwarePanel.Visibility = tag == "firmware" ? Visibility.Visible : Visibility.Collapsed;
         LogsPanel.Visibility = tag == "logs" ? Visibility.Visible : Visibility.Collapsed;
         AboutPanel.Visibility = tag == "about" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPanel.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OpenFirmwareButton_Click(object sender, RoutedEventArgs e)

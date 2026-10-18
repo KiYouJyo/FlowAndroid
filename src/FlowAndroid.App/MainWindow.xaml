@@ -19,7 +19,7 @@
             </StackPanel>
         </Grid>
         <NavigationView x:Name="Navigation" Grid.Row="1" Background="Transparent"
-                        IsBackButtonVisible="Collapsed" IsSettingsVisible="False"
+                        IsBackButtonVisible="Collapsed" IsSettingsVisible="True"
                         PaneDisplayMode="Left" AlwaysShowHeader="False"
                         SelectionChanged="Navigation_SelectionChanged">
             <NavigationView.MenuItems>
@@ -32,21 +32,14 @@
                 <NavigationViewItem x:Name="LogsNav" Tag="logs" Content="诊断日志">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Document" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <!-- Native bottom navigation: About in FooterMenuItems, Settings is the
+                 built-in NavigationView SettingsItem. No language selector in the pane. -->
+            <NavigationView.FooterMenuItems>
                 <NavigationViewItem x:Name="AboutNav" Tag="about" Content="关于">
                     <NavigationViewItem.Icon><SymbolIcon Symbol="Help" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
-            </NavigationView.MenuItems>
-            <NavigationView.PaneFooter>
-                <StackPanel Spacing="8" Padding="12,4,12,12">
-                    <TextBlock x:Name="LanguageCaption" Text="界面语言" Opacity="0.7" FontSize="12"/>
-                    <ComboBox x:Name="LanguageSelector" HorizontalAlignment="Stretch"
-                              SelectedIndex="0" SelectionChanged="LanguageSelector_SelectionChanged">
-                        <ComboBoxItem Content="简体中文" Tag="zh-CN"/>
-                        <ComboBoxItem Content="日本語" Tag="ja-JP"/>
-                        <ComboBoxItem Content="English" Tag="en-US"/>
-                    </ComboBox>
-                </StackPanel>
-            </NavigationView.PaneFooter>
+            </NavigationView.FooterMenuItems>
             <Grid Padding="30,16,30,30">
                 <ScrollViewer x:Name="HomePanel" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="20" MaxWidth="920" HorizontalAlignment="Stretch">
@@ -275,6 +268,51 @@
                         <TextBox x:Name="LogsText" TextWrapping="Wrap" IsReadOnly="True"
                                  AcceptsReturn="True" Height="430"/>
                         <Button x:Name="ClearLogsButton" Content="清空日志" HorizontalAlignment="Left" Click="ClearLogsButton_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer x:Name="SettingsPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20" MaxWidth="920" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="5">
+                            <TextBlock x:Name="SettingsTitle" Text="设置" FontSize="30"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="SettingsDescription" Text="自定义 FlowAndroid 的语言和外观。"
+                                       TextWrapping="Wrap" Opacity="0.75"/>
+                        </StackPanel>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="16">
+                                <TextBlock x:Name="LanguageCaption" Text="界面语言"
+                                           FontSize="19" FontWeight="SemiBold"/>
+                                <ComboBox x:Name="LanguageSelector" HorizontalAlignment="Left"
+                                          MinWidth="240" SelectedIndex="0"
+                                          SelectionChanged="LanguageSelector_SelectionChanged">
+                                    <ComboBoxItem Content="简体中文" Tag="zh-CN"/>
+                                    <ComboBoxItem Content="日本語" Tag="ja-JP"/>
+                                    <ComboBoxItem Content="English" Tag="en-US"/>
+                                </ComboBox>
+                                <TextBlock x:Name="LanguageHint" Text="切换后立即生效，无需重启应用。"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="24">
+                            <StackPanel Spacing="16">
+                                <TextBlock x:Name="AppearanceCaption" Text="应用外观"
+                                           FontSize="19" FontWeight="SemiBold"/>
+                                <ComboBox x:Name="ThemeSelector" HorizontalAlignment="Left"
+                                          MinWidth="240" SelectedIndex="0"
+                                          SelectionChanged="ThemeSelector_SelectionChanged">
+                                    <ComboBoxItem Content="跟随系统" Tag="system"/>
+                                    <ComboBoxItem Content="浅色" Tag="light"/>
+                                    <ComboBoxItem Content="深色" Tag="dark"/>
+                                </ComboBox>
+                                <TextBlock x:Name="AppearanceHint" Text="主题更改立即生效，并在下次启动时保留。"
+                                           TextWrapping="Wrap" Opacity="0.7"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
