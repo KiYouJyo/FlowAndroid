@@ -107,6 +107,10 @@ jobs:
           Copy-Item docs/releases/v0.1.0-preview.zh-CN.md dist/RELEASE.zh-CN.md
           Copy-Item docs/releases/v0.1.0-preview.ja-JP.md dist/RELEASE.ja-JP.md
           Copy-Item docs/releases/v0.1.0-preview.en-US.md dist/RELEASE.en-US.md
+          Copy-Item docs/MANUAL_ACCEPTANCE.md dist/MANUAL_ACCEPTANCE.md
+          Copy-Item docs/ACCEPTANCE_RECORD_TEMPLATE.md dist/ACCEPTANCE_RECORD_TEMPLATE.md
+          Copy-Item docs/CERTIFICATE_SETUP.md dist/CERTIFICATE_SETUP.md
+          Copy-Item scripts/Install-Acceptance.ps1 dist/Install-Acceptance.ps1
       - name: Remove secret PFX file
         if: always()
         shell: pwsh
