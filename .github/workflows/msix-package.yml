@@ -23,7 +23,7 @@ jobs:
   package:
     runs-on: windows-latest
     env:
-      PACKAGE_ID: ${{ vars.FLOWANDROID_PACKAGE_ID }}
+      PACKAGE_ID: ${{ vars.FLOWANDROID_PACKAGE_ID || 'KiYouJyo.FlowAndroid' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -39,11 +39,11 @@ jobs:
         if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
         shell: pwsh
         env:
-          PFX_BASE64: ${{ secrets.FLOWANDROID_PFX_BASE64 }}
-          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD }}
+          PFX_BASE64: ${{ secrets.FLOWANDROID_PFX_BASE64 || secrets.GH_RELEASE_CERTIFICATE_BASE64 }}
+          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD || secrets.GH_RELEASE_CERTIFICATE_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if (!$env:PFX_BASE64 -or !$env:PFX_PASSWORD -or !$env:PACKAGE_ID) { throw 'Set FLOWANDROID_PFX_BASE64, FLOWANDROID_PFX_PASSWORD secrets and FLOWANDROID_PACKAGE_ID variable.' }
+          if (!$env:PFX_BASE64 -or !$env:PFX_PASSWORD -or !$env:PACKAGE_ID) { throw 'Signing secrets missing: set FLOWANDROID_PFX_BASE64/PASSWORD or the existing GH_RELEASE_CERTIFICATE_BASE64/PASSWORD. Package ID defaults to KiYouJyo.FlowAndroid.' }
           $path = Join-Path $env:RUNNER_TEMP 'FlowAndroid.pfx'
           [IO.File]::WriteAllBytes($path,[Convert]::FromBase64String($env:PFX_BASE64))
           $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($path,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
@@ -67,7 +67,7 @@ jobs:
         if: ${{ github.event_name == 'push' || inputs.sign_package == true }}
         shell: pwsh
         env:
-          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD }}
+          PFX_PASSWORD: ${{ secrets.FLOWANDROID_PFX_PASSWORD || secrets.GH_RELEASE_CERTIFICATE_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Stop'
           $tool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe | Where-Object { $_.FullName -match '\\x64\\signtool.exe$' } | Sort-Object FullName -Descending | Select-Object -First 1
@@ -77,8 +77,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Signing failed.' }
           $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($pfx,$env:PFX_PASSWORD,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
           [IO.File]::WriteAllBytes('dist/FlowAndroid-public.cer',$cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-          & $tool.FullName verify /pa dist/FlowAndroid-0.1.0-x64.msix
-          if ($LASTEXITCODE -ne 0) { throw 'Certificate was not trusted on the build agent.' }
+          $signature = Get-AuthenticodeSignature -LiteralPath dist/FlowAndroid-0.1.0-x64.msix
+          if (!$signature.SignerCertificate -or $signature.SignerCertificate.Thumbprint -cne $cert.Thumbprint) {
+            throw 'Signed package signer does not match the configured PFX.'
+          }
+          if ($signature.Status -in @('HashMismatch','NotSigned','NotSupportedFileFormat')) {
+            throw "MSIX signature is invalid: $($signature.Status)"
+          }
+          if ($signature.Status -eq 'UnknownError' -and
+              $signature.StatusMessage -notmatch '(?i)not trusted|trust provider|untrusted|self-signed|certificate chain') {
+            throw "Unexpected Authenticode verification error: $($signature.StatusMessage)"
+          }
+          if ($signature.Status -notin @('Valid','UnknownError')) {
+            throw "Unacceptable Authenticode status: $($signature.Status)"
+          }
+          # Acceptance signing may use a self-signed publisher certificate.
+          # It still needs explicit trust installation before app installation on clean Windows.
+          "Signing result: $($signature.Status); signer thumbprint: $($cert.Thumbprint)" |
+            Set-Content 'dist/SIGNATURE-STATUS.txt' -Encoding utf8
+          if ($signature.Status -ne 'Valid') {
+            'This acceptance MSIX has a signer that is not publicly trusted by this runner. Import the public .cer into TrustedPeople on a dedicated test PC after checking its thumbprint; do not advertise as publicly trusted.' |
+              Add-Content 'dist/SIGNATURE-STATUS.txt'
+          }
       - name: Generate checksum and three-language notes
         shell: pwsh
         run: |
